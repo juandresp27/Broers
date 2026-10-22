@@ -16,8 +16,9 @@ const client = new Anthropic();
 const schema = {
   type: 'object',
   additionalProperties: false,
-  required: ['logline', 'summary', 'previously', 'characters', 'moments'],
+  required: ['title', 'logline', 'summary', 'previously', 'characters', 'moments'],
   properties: {
+    title: { type: 'string', description: 'Título limpio del episodio, en mayúsculas y minúsculas normales, con nombres propios bien escritos. Basado en el título del video, sin el nombre de la serie, del streamer ni numeración.' },
     logline: { type: 'string', description: 'Una frase gancho, máximo 140 caracteres, sin spoilers del final.' },
     summary: { type: 'string', description: 'Sinopsis de 2 a 4 frases, tono de plataforma de streaming.' },
     previously: { type: 'string', description: 'Resumen "Anteriormente en…" de 1 a 2 frases para quien vio el episodio anterior.' },

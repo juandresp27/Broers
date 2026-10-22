@@ -10,6 +10,7 @@ export interface Video {
 }
 
 export interface Synopsis {
+  title?: string;
   logline?: string;
   summary?: string;
   previously?: string;
@@ -29,6 +30,8 @@ export interface SeasonConfig {
   number: number;
   title?: string;
   playlists?: string[];
+  reverse?: boolean;
+  special?: boolean;
   exclude?: string[];
   insert?: { id: string; after?: string | null }[];
   order?: string[];
@@ -68,6 +71,7 @@ export interface Episode extends Video {
 export interface Season {
   number: number;
   title: string;
+  special?: boolean;
   episodes: Episode[];
 }
 

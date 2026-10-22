@@ -1,0 +1,18 @@
+slug: el-dios-de-todo
+title: El Dios de Todo
+kind: Serie de ElJuaniquilador
+year: 2023
+color: "#C08A1E"
+tagline: "Hechicero supremo, guardián de las dimensiones… y futuro dios de todo."
+tags: [aventura, fantasía, comedia]
+seasons:
+  - number: 1
+    title: El Dios de Todo
+    playlists: [PL3kCkbalPgdN0E2AjA5Qf5nDHwiTksY91]
+    exclude: [11SkB-SsjlE]
+  - number: 2
+    title: Pacto de Halloween
+    special: true
+    order: [11SkB-SsjlE]
+episodes:
+  27mDLy5YD80: { title: "Dioses de todo: el final" }

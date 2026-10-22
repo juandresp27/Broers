@@ -1,0 +1,23 @@
+slug: jimmy-santoyo
+title: Jimmy Santoyo
+kind: Roleplay · London Eye
+year: 2022
+color: "#B3261E"
+tags: [mafia, crimen, drama]
+seasons:
+  - number: 1
+    title: Jimmy Santoyo
+    playlists: [PL5Jbu_fvlS79ectWKlRHnrQ8kkpbe3r2Z]
+    exclude: [DZpoB3UkNv0]
+  - number: 2
+    title: Martín Martínez x Jimmy Santoyo
+    special: true
+    order: [DZpoB3UkNv0]
+episodes:
+  mnt4D16u92I: { title: "El inicio" }
+  8qLZsWqfU5I: { title: "Raúl Salinas en problemas" }
+  DZpoB3UkNv0: { title: "La ciudad en peligro" }
+  hR8VA5Xdj2g: { title: "Jimmy y García secuestran a Olivia" }
+  KGwwwLHcRTI: { title: "Nikki Santoyo termina la relación" }
+  fouUU2TOwCY: { title: "Gordon y Nikki encuentran la habitación" }
+  PWoFwUQEkVI: { title: "A punto de cometer un grave error" }

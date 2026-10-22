@@ -5,7 +5,8 @@ import Art from './Art.astro';
 
 interface Props { episode: Episode; series: Series; showSeries?: boolean }
 const { episode: e, series: s, showSeries = false } = Astro.props;
-const code = s.seasons.length > 1 ? `T${e.season}:E${e.number}` : `Ep. ${e.number}`;
+const special = s.seasons.find((x) => x.number === e.season)?.special;
+const code = special ? 'Especial' : s.seasons.length > 1 ? `T${e.season}:E${e.number}` : `Ep. ${e.number}`;
 ---
 <a href={e.href} class="ep-card" data-ep={e.id}>
   <div class="frame">

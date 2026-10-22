@@ -20,7 +20,7 @@ const multi = s.seasons.length > 1;
           <div class="seasons" role="tablist" aria-label="Temporadas">
             {s.seasons.map((x, i) => (
               <button role="tab" type="button" aria-selected={i === 0 ? 'true' : 'false'} data-season-tab={x.number}>
-                <span class="label">T{x.number}</span> {x.title}
+                <span class="label">{x.special ? "Especial" : `T${x.number}`}</span> {x.title}
               </button>
             ))}
           </div>

@@ -35,7 +35,7 @@ function build(config: SeriesConfig): Series {
       return {
         ...video,
         id,
-        title: override.title || cleanTitle(video.title, config.title) || `Episodio ${i + 1}`,
+        title: override.title || synopsis.title || cleanTitle(video.title, config.title) || `Episodio ${i + 1}`,
         thumb: video.thumb ?? (video.demo ? undefined : thumbFor(id)),
         series: config.slug,
         season: sc.number,
@@ -45,7 +45,7 @@ function build(config: SeriesConfig): Series {
         href: `${href}/${id}`,
       };
     });
-    return { number: sc.number, title: sc.title ?? `Temporada ${sc.number}`, episodes };
+    return { number: sc.number, title: sc.title ?? (sc.special ? 'Especial' : `Temporada ${sc.number}`), special: sc.special, episodes };
   });
 
   const first = seasons[0]?.episodes[0];
@@ -67,14 +67,18 @@ function build(config: SeriesConfig): Series {
 export function cleanTitle(title: string, seriesTitle: string): string {
   if (!title) return '';
   const esc = seriesTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return title
+  let t = title
+    .replace(/\p{Extended_Pictographic}|\u200d|\ufe0f/gu, '')
     .replace(new RegExp(esc, 'ig'), '')
-    .replace(/\|?\s*juans?guarnizo/ig, '')
+    .replace(/\|?\|?\s*juans?guarnizo/ig, '')
     .replace(/#\d+/g, '')
     .replace(/\b(ep(isodio)?|cap(itulo|ítulo)?)\.?\s*\d+\b/ig, '')
-    .replace(/^[\s\-–—|:·]+|[\s\-–—|:·]+$/g, '')
+    .replace(/^[\s\-–—|:·\/?,]+|[\s\-–—|:·\/,]+$/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
+  // Títulos EN MAYÚSCULAS → frase normal (los nombres propios los corrige la sinopsis generada o un override)
+  if (t === t.toUpperCase() && /[A-ZÁÉÍÓÚÑ]{3}/.test(t)) t = t.toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
 export const allSeries: Series[] = Object.values(configFiles)

@@ -2,7 +2,7 @@
 // playlists (en orden, sin duplicados) → exclude → insert. Si la temporada define `order`, manda ese.
 
 /**
- * @param {{ playlists?: string[], exclude?: string[], insert?: { id: string, after?: string | null }[], order?: string[] }} season
+ * @param {{ playlists?: string[], reverse?: boolean, exclude?: string[], insert?: { id: string, after?: string | null }[], order?: string[] }} season
  * @param {{ playlists: Record<string, { items: string[] }> }} data
  * @returns {string[]}
  */
@@ -15,6 +15,8 @@ export function resolveOrder(season, data) {
       if (!seen.has(id)) (seen.add(id), ids.push(id));
     }
   }
+  // Playlists armadas "más nuevo primero" se voltean con reverse: true
+  if (season.reverse) ids.reverse();
   const excluded = new Set(season.exclude ?? []);
   const out = ids.filter((id) => !excluded.has(id));
   for (const { id, after } of season.insert ?? []) {

@@ -1,0 +1,14 @@
+slug: william-sereno
+title: William Sereno
+kind: Roleplay · Marbella Vice
+year: 2025
+color: "#1C8C9E"
+featured: true
+start_here: true
+tags: [comedia, drama]
+seasons:
+  - number: 1
+    title: William Sereno
+    playlists: [PL5Jbu_fvlS79q29C2XEJ9YXSU0V_cJ36k]
+    reverse: true            # la playlist está de más nuevo a más viejo
+    exclude: [dXINFSbe5BM]   # video privado

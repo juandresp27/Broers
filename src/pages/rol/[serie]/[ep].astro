@@ -11,8 +11,8 @@ export const getStaticPaths = () =>
 
 const { series: s, episode: e } = Astro.props as { series: Series; episode: Episode };
 const { prev, next } = neighbours(s, e.id);
-const code = s.seasons.length > 1 ? `Temporada ${e.season} · Episodio ${e.number}` : `Episodio ${e.number} de ${s.episodeCount}`;
 const season = s.seasons.find((x) => x.number === e.season)!;
+const code = season.special ? `Especial · ${season.title}` : s.seasons.length > 1 ? `Temporada ${e.season} · Episodio ${e.number}` : `Episodio ${e.number} de ${season.episodes.length}`;
 const stamp = (t: number) => `${Math.floor(t / 3600) ? Math.floor(t / 3600) + ':' : ''}${String(Math.floor((t % 3600) / 60)).padStart(Math.floor(t / 3600) ? 2 : 1, '0')}:${String(t % 60).padStart(2, '0')}`;
 ---
 <Base title={`${e.title} · ${s.title}`} description={e.synopsis.logline ?? s.tagline} accent={s.color}>
