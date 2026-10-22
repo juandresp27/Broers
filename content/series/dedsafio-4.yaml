@@ -1,7 +1,8 @@
 # Serie armada con videos sueltos (sin playlist): el orden es el de `order`.
 slug: dedsafio-4
 title: Dedsafío 4
-kind: Reality de Minecraft
+kind: Serie de ElJuaniquilador
+year: 2026
 color: "#3E9B4F"
 seasons:
   - number: 1
