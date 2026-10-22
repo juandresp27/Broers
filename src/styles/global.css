@@ -1,0 +1,111 @@
+@import '@fontsource-variable/archivo/wdth.css';
+
+:root {
+  --ink: #0f0e0c;
+  --ink-2: #171512;
+  --ink-3: #221f1a;
+  --line: rgb(241 234 219 / 0.11);
+  --line-strong: rgb(241 234 219 / 0.24);
+  --paper: #f1eadb;
+  --muted: #a39c8e;
+  --faint: #6f695e;
+  --signal: #ffc21a;
+  --signal-ink: #1b1400;
+  --live: #ff3b2f;
+
+  --font: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+  --gutter: clamp(16px, 4vw, 56px);
+  --radius: 3px;
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 88px; }
+
+body {
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.55;
+  font-stretch: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* Grano de película muy sutil: da textura sin ensuciar */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+img, svg, video, iframe { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+
+::selection { background: var(--signal); color: var(--signal-ink); }
+
+/* ——— Tipografía ——— */
+.display {
+  font-stretch: 62%;
+  font-weight: 860;
+  text-transform: uppercase;
+  line-height: 0.86;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+.label {
+  font-stretch: 118%;
+  font-weight: 620;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.lede { font-size: clamp(1rem, 0.6vw + 0.9rem, 1.2rem); color: rgb(241 234 219 / 0.82); max-width: 58ch; text-wrap: pretty; }
+.muted { color: var(--muted); }
+
+.wrap { padding-inline: var(--gutter); }
+
+/* ——— Botones ——— */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  height: 48px;
+  padding: 0 1.3rem;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-stretch: 108%;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  transition: transform 0.2s var(--ease), background-color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--signal); color: var(--signal-ink); }
+.btn-primary:hover { background: #ffd24f; }
+.btn-ghost { border: 1px solid var(--line-strong); }
+.btn-ghost:hover { border-color: var(--paper); }
+.btn svg { width: 16px; height: 16px; }
+
+/* ——— Metadatos en línea separados por un punto ——— */
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; color: var(--muted); font-size: 0.9rem; }
+.meta > * + *::before { content: ''; display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: currentColor; margin-right: 0.9rem; vertical-align: middle; opacity: 0.7; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

@@ -1,0 +1,24 @@
+{
+ "logline": "La traición: un episodio de ejemplo de Ciudad Neón.",
+ "summary": "Texto de ejemplo. Aquí va la sinopsis generada a partir de los subtítulos del stream: qué pasa, quién aparece y por qué importa para la historia de Ciudad Neón.",
+ "previously": "En \"Nuevo jefe en el barrio\", la historia dio un giro que deja todo listo para este episodio.",
+ "characters": [
+  "Tomás \"El Broer\" Rivas",
+  "La Jefa",
+  "Comisario Duarte"
+ ],
+ "moments": [
+  {
+   "t": 300,
+   "text": "Arranca el episodio"
+  },
+  {
+   "t": 2400,
+   "text": "El primer giro"
+  },
+  {
+   "t": 5400,
+   "text": "El momento que todos clipearon"
+  }
+ ]
+}

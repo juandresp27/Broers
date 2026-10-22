@@ -1,0 +1,32 @@
+---
+import type { Episode, Series } from '../../lib/types';
+import { formatDuration } from '../../lib/catalog';
+import Art from './Art.astro';
+
+interface Props { episode: Episode; series: Series; showSeries?: boolean }
+const { episode: e, series: s, showSeries = false } = Astro.props;
+const code = s.seasons.length > 1 ? `T${e.season}:E${e.number}` : `Ep. ${e.number}`;
+---
+<a href={e.href} class="ep-card" data-ep={e.id}>
+  <div class="frame">
+    <Art thumb={e.thumb} color={s.color} label={String(e.number).padStart(2, '0')} caption={s.title} />
+    <span class="progress" aria-hidden="true"><span></span></span>
+  </div>
+  <div class="text">
+    <span class="label">{showSeries ? `${s.title} · ${code}` : code}{e.duration ? ` · ${formatDuration(e.duration)}` : ''}</span>
+    <span class="title">{e.title}</span>
+  </div>
+</a>
+
+<style>
+  .ep-card { display: grid; gap: 10px; width: var(--card-w, clamp(240px, 26vw, 360px)); }
+  .frame { position: relative; transition: transform 0.35s var(--ease); }
+  .ep-card:hover .frame { transform: translateY(-4px); }
+  .frame :global(.art) { box-shadow: 0 0 0 1px var(--line); transition: box-shadow 0.25s; }
+  .ep-card:hover .frame :global(.art) { box-shadow: 0 0 0 2px var(--paper); }
+  .progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgb(0 0 0 / 0.5); display: none; }
+  .progress span { display: block; height: 100%; width: var(--p, 0%); background: var(--signal); }
+  :global([data-progress]) > .frame .progress { display: block; }
+  .text { display: grid; gap: 2px; }
+  .title { font-weight: 640; font-size: 1.02rem; line-height: 1.3; text-wrap: balance; }
+</style>

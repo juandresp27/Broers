@@ -1,0 +1,40 @@
+---
+// Imagen de un episodio o serie. Con miniatura real: foto. Sin miniatura (demo): tarjeta tipográfica con el color de la serie.
+interface Props {
+  thumb?: string;
+  color: string;
+  label: string; // texto grande de la tarjeta (número de episodio o inicial)
+  caption?: string;
+  duotone?: boolean;
+  eager?: boolean;
+  class?: string;
+}
+const { thumb, color, label, caption, duotone = false, eager = false, class: cls } = Astro.props;
+---
+<div class:list={['art', { duotone }, cls]} style={`--c:${color}`}>
+  {thumb ? (
+    <img src={thumb} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : undefined} />
+  ) : (
+    <div class="card" aria-hidden="true">
+      <span class="num display">{label}</span>
+      {caption && <span class="cap label">{caption}</span>}
+    </div>
+  )}
+</div>
+
+<style>
+  .art { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--ink-3); border-radius: var(--radius); isolation: isolate; }
+  .art img { width: 100%; height: 100%; object-fit: cover; }
+  .duotone img { filter: grayscale(1) contrast(1.15) brightness(0.9); }
+  .duotone::after { content: ''; position: absolute; inset: 0; background: var(--c); mix-blend-mode: multiply; opacity: 0.85; }
+  .card {
+    position: absolute; inset: 0; display: grid; align-content: end; padding: 7%;
+    background:
+      repeating-linear-gradient(-58deg, transparent 0 22px, rgb(0 0 0 / 0.07) 22px 23px),
+      radial-gradient(120% 90% at 85% 10%, color-mix(in oklab, var(--c), white 18%), var(--c) 45%, color-mix(in oklab, var(--c), black 55%));
+  }
+  .num { position: absolute; right: 5%; bottom: -12%; font-size: 92cqh; line-height: 1; color: transparent; -webkit-text-stroke: 2px rgb(255 255 255 / 0.55); }
+  .cap { position: relative; color: rgb(0 0 0 / 0.72); }
+  .art { container-type: size; }
+  @container (max-width: 220px) { .cap { display: none; } }
+</style>

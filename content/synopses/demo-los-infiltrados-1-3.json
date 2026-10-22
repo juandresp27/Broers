@@ -1,0 +1,22 @@
+{
+ "logline": "La votación: un episodio de ejemplo de Los Infiltrados.",
+ "summary": "Texto de ejemplo. Aquí va la sinopsis generada a partir de los subtítulos del stream: qué pasa, quién aparece y por qué importa para la historia de Los Infiltrados.",
+ "previously": "En \"Sospechas\", la historia dio un giro que deja todo listo para este episodio.",
+ "characters": [
+  "Detective Guarnizo"
+ ],
+ "moments": [
+  {
+   "t": 300,
+   "text": "Arranca el episodio"
+  },
+  {
+   "t": 2400,
+   "text": "El primer giro"
+  },
+  {
+   "t": 5400,
+   "text": "El momento que todos clipearon"
+  }
+ ]
+}

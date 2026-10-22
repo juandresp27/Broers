@@ -1,0 +1,48 @@
+---
+const links = [
+  { href: '/rol', label: 'Series' },
+  { href: '/clips', label: 'Clips' },
+  { href: '/zona', label: 'Zona Broers' },
+  { href: '/juegos', label: 'Juegos' },
+  { href: '/agenda', label: 'Agenda' },
+];
+const path = Astro.url.pathname;
+---
+<header class="site-header" transition:persist>
+  <a href="/" class="brand" aria-label="Broers, inicio">
+    <span class="display">Broers</span>
+    <span class="live-dot" data-live hidden aria-label="En vivo ahora"></span>
+  </a>
+  <nav aria-label="Principal">
+    {links.map((l) => (
+      <a href={l.href} aria-current={path.startsWith(l.href) ? 'page' : undefined}>{l.label}</a>
+    ))}
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    position: fixed; inset: 0 0 auto; z-index: 50;
+    height: 68px; display: flex; align-items: center; gap: clamp(20px, 4vw, 56px);
+    padding-inline: var(--gutter);
+    background: linear-gradient(to bottom, rgb(15 14 12 / 0.92), rgb(15 14 12 / 0));
+    transition: background-color 0.3s;
+  }
+  /* Al hacer scroll el encabezado se vuelve sólido (solo en navegadores que lo soportan) */
+  @supports (animation-timeline: scroll()) {
+    .site-header { animation: solidify linear both; animation-timeline: scroll(); animation-range: 0 160px; }
+    @keyframes solidify { to { background-color: var(--ink); box-shadow: 0 1px 0 var(--line); } }
+  }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand .display { font-size: 1.9rem; line-height: 1; letter-spacing: 0.01em; }
+  .live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 0 rgb(255 59 47 / 0.6); animation: pulse 1.6s infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 9px rgb(255 59 47 / 0); } 100% { box-shadow: 0 0 0 0 rgb(255 59 47 / 0); } }
+  nav { display: flex; gap: clamp(14px, 2.4vw, 32px); overflow-x: auto; scrollbar-width: none; }
+  nav a { font-size: 0.9rem; font-weight: 560; color: var(--muted); white-space: nowrap; padding-block: 6px; position: relative; transition: color 0.2s; }
+  nav a:hover, nav a[aria-current] { color: var(--paper); }
+  nav a[aria-current]::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--signal); }
+  @media (max-width: 640px) {
+    .site-header { height: auto; flex-direction: column; align-items: flex-start; gap: 4px; padding-block: 12px 8px; }
+    nav { width: 100%; }
+  }
+</style>

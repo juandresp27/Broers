@@ -1,0 +1,84 @@
+---
+import Base from '../layouts/Base.astro';
+import SeriesCard from '../components/rol/SeriesCard.astro';
+import Row from '../components/rol/Row.astro';
+import { allSeries } from '../lib/catalog';
+
+const sections = [
+  { href: '/rol', n: '01', title: 'Series', text: 'Todos los roleplays ordenados como en una plataforma: temporadas, episodios y resúmenes para ponerte al día.', ready: true },
+  { href: '/clips', n: '02', title: 'Clips', text: 'Los mejores momentos con etiquetas y el clip del día.' },
+  { href: '/zona', n: '03', title: 'Zona Broers', text: 'Fanart, memes, encuestas, frases y el glosario de chistes internos.' },
+  { href: '/juegos', n: '04', title: 'Juegos', text: '¿Qué personaje eres?, bingo del stream, predicciones y ¿Quién lo dijo?' },
+  { href: '/album', n: '05', title: 'Álbum', text: 'Colecciona las láminas de personajes y momentos míticos.' },
+  { href: '/agenda', n: '06', title: 'Agenda', text: 'Cuándo hay stream y qué se viene esta semana.' },
+];
+---
+<Base>
+  <section class="hero wrap">
+    <p class="status label" data-status>
+      <span class="dot"></span><span data-status-text>Revisando si hay stream…</span>
+    </p>
+    <h1 class="display">La casa<br />de los <em>Broers</em></h1>
+    <p class="lede">Las series de rol de JuanSGuarnizo vistas como se merecen, los clips que no te puedes perder y un rincón para la comunidad.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="/rol">Ver las series</a>
+      <a class="btn btn-ghost" href="https://www.twitch.tv/juansguarnizo" target="_blank" rel="noopener">Ir al canal de Twitch ↗</a>
+    </div>
+  </section>
+
+  <Row title="Series para maratonear">
+    {allSeries.map((s) => <SeriesCard series={s} />)}
+  </Row>
+
+  <section class="index wrap" aria-label="Secciones">
+    {sections.map((s) => (
+      <a href={s.href} class:list={['tile', { soon: !s.ready }]}>
+        <span class="n display">{s.n}</span>
+        <h2>{s.title}</h2>
+        <p>{s.text}</p>
+        {!s.ready && <span class="label">Muy pronto</span>}
+      </a>
+    ))}
+  </section>
+</Base>
+
+<script>
+  // Estado en vivo sin llaves ni backend: decapi.me responde con el uptime del canal en texto plano.
+  async function status() {
+    const el = document.querySelector<HTMLElement>('[data-status]');
+    if (!el) return;
+    try {
+      const res = await fetch('https://decapi.me/twitch/uptime/juansguarnizo', { cache: 'no-store' });
+      const text = (await res.text()).trim();
+      const live = res.ok && !/offline|error|not found/i.test(text);
+      el.dataset.live = String(live);
+      el.querySelector('[data-status-text]')!.textContent = live ? `En vivo ahora · lleva ${text}` : 'Ahora mismo no hay stream';
+      document.querySelectorAll<HTMLElement>('[data-live]').forEach((d) => (d.hidden = !live));
+    } catch {
+      el.hidden = true;
+    }
+  }
+  document.addEventListener('astro:page-load', status);
+</script>
+
+<style>
+  .hero { padding-top: clamp(140px, 22vh, 220px); display: grid; gap: 24px; }
+  h1 { font-size: clamp(4.5rem, 15vw, 15rem); }
+  h1 em { font-style: normal; color: var(--signal); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .status { display: inline-flex; align-items: center; gap: 10px; color: var(--paper); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); }
+  [data-live='true'] .dot { background: var(--live); animation: blink 1.4s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  .index { margin-top: 112px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); border-top: 1px solid var(--line); }
+  .tile { position: relative; display: grid; gap: 10px; align-content: start; padding: 28px 28px 36px 0; border-bottom: 1px solid var(--line); min-height: 220px; }
+  .tile + .tile { padding-left: 28px; border-left: 1px solid var(--line); }
+  .n { font-size: 3rem; color: transparent; -webkit-text-stroke: 1.5px var(--faint); transition: -webkit-text-stroke-color 0.2s; }
+  .tile:hover .n { -webkit-text-stroke-color: var(--signal); }
+  .tile h2 { font-size: 1.6rem; font-weight: 800; font-stretch: 80%; }
+  .tile p { color: var(--muted); max-width: 36ch; }
+  .soon h2 { color: rgb(241 234 219 / 0.7); }
+  .soon .label { color: var(--signal); }
+  @media (max-width: 700px) { .tile + .tile { padding-left: 0; border-left: 0; } }
+</style>

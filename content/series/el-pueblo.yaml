@@ -1,0 +1,24 @@
+# DEMO: serie de ejemplo. Bórrala cuando agregues las series reales.
+demo: true
+slug: el-pueblo
+title: El Pueblo
+kind: Minecraft Roleplay
+year: 2024
+color: "#3FA34D"
+start_here: true
+tagline: "Un alcalde, cuarenta vecinos y cero ganas de pagar impuestos."
+synopsis: "Un pueblo pequeño elige al alcalde menos preparado de su historia. Entre elecciones amañadas, guerras de vecinos y una mina que nadie debería abrir, gobernar resulta más difícil de lo que parecía."
+tags: [comedia, política]
+seasons:
+  - number: 1
+    title: Temporada 1
+    playlists: [demo-el-pueblo-1]
+cast:
+  - name: "Alcalde Juancho"
+    played_by: JuanSGuarnizo
+    role: Protagonista
+    bio: "Ganó las elecciones por un voto. El suyo."
+  - name: "Doña Rosa"
+    played_by: Invitada
+    role: Vecina
+    bio: "Sabe todo lo que pasa en el pueblo antes de que pase."

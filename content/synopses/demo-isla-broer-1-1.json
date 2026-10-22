@@ -1,0 +1,21 @@
+{
+ "logline": "Naufragio: un episodio de ejemplo de Isla Broer.",
+ "summary": "Texto de ejemplo. Aquí va la sinopsis generada a partir de los subtítulos del stream: qué pasa, quién aparece y por qué importa para la historia de Isla Broer.",
+ "characters": [
+  "Juan"
+ ],
+ "moments": [
+  {
+   "t": 300,
+   "text": "Arranca el episodio"
+  },
+  {
+   "t": 2400,
+   "text": "El primer giro"
+  },
+  {
+   "t": 5400,
+   "text": "El momento que todos clipearon"
+  }
+ ]
+}

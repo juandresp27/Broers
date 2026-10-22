@@ -1,0 +1,47 @@
+---
+// Fila horizontal con desplazamiento por gestos o con flechas en escritorio.
+interface Props { title: string; note?: string; id?: string; hidden?: boolean }
+const { title, note, id, hidden } = Astro.props;
+---
+<section class="row" id={id} hidden={hidden} data-row>
+  <header class="wrap">
+    <h2>{title}</h2>
+    {note && <span class="label">{note}</span>}
+    <div class="arrows">
+      <button type="button" data-dir="-1" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button type="button" data-dir="1" aria-label="Siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+  </header>
+  <div class="track" data-track><slot /></div>
+</section>
+
+<script>
+  function wire() {
+    document.querySelectorAll<HTMLElement>('[data-row]').forEach((row) => {
+      if (row.dataset.wired) return;
+      row.dataset.wired = '1';
+      const track = row.querySelector<HTMLElement>('[data-track]')!;
+      row.querySelectorAll<HTMLButtonElement>('[data-dir]').forEach((b) =>
+        b.addEventListener('click', () => track.scrollBy({ left: Number(b.dataset.dir) * track.clientWidth * 0.85, behavior: 'smooth' })),
+      );
+    });
+  }
+  document.addEventListener('astro:page-load', wire);
+</script>
+
+<style>
+  .row { margin-top: clamp(40px, 6vw, 72px); }
+  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 16px; }
+  h2 { font-size: clamp(1.15rem, 1vw + 0.9rem, 1.5rem); font-weight: 760; font-stretch: 90%; letter-spacing: -0.01em; }
+  .arrows { margin-left: auto; display: flex; gap: 6px; }
+  .arrows button { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; transition: border-color 0.2s, background-color 0.2s; }
+  .arrows button:hover { border-color: var(--paper); background: var(--ink-3); }
+  .arrows svg { width: 16px; }
+  .track {
+    display: flex; gap: clamp(12px, 1.4vw, 20px); overflow-x: auto; scroll-snap-type: x mandatory;
+    padding: 6px var(--gutter) 14px; scroll-padding-inline: var(--gutter); scrollbar-width: none;
+  }
+  .track::-webkit-scrollbar { display: none; }
+  .track > :global(*) { scroll-snap-align: start; flex-shrink: 0; }
+  @media (hover: none), (max-width: 640px) { .arrows { display: none; } }
+</style>

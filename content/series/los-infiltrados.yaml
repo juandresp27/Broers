@@ -1,0 +1,20 @@
+# DEMO: serie de ejemplo. Bórrala cuando agregues las series reales.
+demo: true
+slug: los-infiltrados
+title: Los Infiltrados
+kind: Roleplay de misterio
+year: 2023
+color: "#2F6FEB"
+start_here: true
+tagline: "Hay un traidor en el grupo. Puede que seas tú."
+synopsis: "Seis desconocidos despiertan en una casa aislada. Uno de ellos trabaja para alguien más. Una serie corta, ideal para empezar."
+tags: [misterio, suspenso]
+seasons:
+  - number: 1
+    title: Miniserie
+    playlists: [demo-los-infiltrados-1]
+cast:
+  - name: "Detective Guarnizo"
+    played_by: JuanSGuarnizo
+    role: Protagonista
+    bio: "Confía en todos. Ese es su problema."

@@ -1,0 +1,19 @@
+# DEMO: serie de ejemplo. Bórrala cuando agregues las series reales.
+demo: true
+slug: isla-broer
+title: Isla Broer
+kind: Supervivencia
+year: 2022
+color: "#1FA39A"
+tagline: "Cien días, una isla y muy malas decisiones."
+synopsis: "Un naufragio deja al grupo en una isla sin señal. Lo que empieza como unas vacaciones forzadas termina en una pelea por el último coco."
+tags: [aventura, comedia]
+seasons:
+  - number: 1
+    title: Temporada 1
+    playlists: [demo-isla-broer-1]
+cast:
+  - name: "Juan"
+    played_by: JuanSGuarnizo
+    role: Náufrago
+    bio: "Trajo una guitarra y ninguna comida."

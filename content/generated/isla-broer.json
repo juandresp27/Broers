@@ -1,0 +1,51 @@
+{
+ "playlists": {
+  "demo-isla-broer-1": {
+   "title": "Isla Broer T1",
+   "items": [
+    "demo-isla-broer-1-1",
+    "demo-isla-broer-1-2",
+    "demo-isla-broer-1-3",
+    "demo-isla-broer-1-4",
+    "demo-isla-broer-1-5"
+   ]
+  }
+ },
+ "videos": {
+  "demo-isla-broer-1-1": {
+   "id": "demo-isla-broer-1-1",
+   "title": "Naufragio",
+   "demo": true,
+   "duration": 7200,
+   "publishedAt": "2025-03-25T00:00:00.000Z"
+  },
+  "demo-isla-broer-1-2": {
+   "id": "demo-isla-broer-1-2",
+   "title": "El refugio",
+   "demo": true,
+   "duration": 8989,
+   "publishedAt": "2025-03-28T00:00:00.000Z"
+  },
+  "demo-isla-broer-1-3": {
+   "id": "demo-isla-broer-1-3",
+   "title": "Tormenta",
+   "demo": true,
+   "duration": 10778,
+   "publishedAt": "2025-03-31T00:00:00.000Z"
+  },
+  "demo-isla-broer-1-4": {
+   "id": "demo-isla-broer-1-4",
+   "title": "La otra tribu",
+   "demo": true,
+   "duration": 12567,
+   "publishedAt": "2025-04-03T00:00:00.000Z"
+  },
+  "demo-isla-broer-1-5": {
+   "id": "demo-isla-broer-1-5",
+   "title": "Rescate",
+   "demo": true,
+   "duration": 8956,
+   "publishedAt": "2025-04-06T00:00:00.000Z"
+  }
+ }
+}

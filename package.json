@@ -1,0 +1,29 @@
+{
+  "name": "broers",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "ingest": "node scripts/ingest.mjs",
+    "synopsis": "node scripts/synopsis.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@astrojs/svelte": "^9.1.1",
+    "@fontsource-variable/archivo": "^5.3.0",
+    "astro": "^7.4.2",
+    "svelte": "^5.57.2",
+    "yaml": "^2.9.1"
+  },
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=22.23"
+  }
+}
