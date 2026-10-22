@@ -48,7 +48,8 @@ function build(config: SeriesConfig): Series {
     return { number: sc.number, title: sc.title ?? (sc.special ? 'Especial' : `Temporada ${sc.number}`), special: sc.special, episodes };
   });
 
-  const first = seasons[0]?.episodes[0];
+  const eps = seasons.flatMap((x) => x.episodes).filter((e) => !e.demo);
+  const mostViewed = [...eps].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0];
   const { seasons: _s, episodes: _e, ...meta } = config;
   return {
     ...meta,
@@ -57,7 +58,7 @@ function build(config: SeriesConfig): Series {
     episodeCount: absolute,
     runtime,
     views,
-    poster: first?.thumb ? thumbFor(first.id, 'hq') : undefined,
+    backdrop: config.backdrop ?? mostViewed?.id,
     href,
     lastPublished,
   };
@@ -69,7 +70,9 @@ export function cleanTitle(title: string, seriesTitle: string): string {
   const esc = seriesTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   let t = title
     .replace(/\p{Extended_Pictographic}|\u200d|\ufe0f/gu, '')
-    .replace(new RegExp(esc, 'ig'), '')
+    // El nombre de la serie solo se quita si está al inicio o después de un separador ("… / EL DIOS DE TODO #3")
+    .replace(new RegExp(`^\\s*${esc}[\\s,?:]*`, 'i'), '')
+    .replace(new RegExp(`[/|\\-–—:]+\\s*${esc}`, 'ig'), '')
     .replace(/\|?\|?\s*juans?guarnizo/ig, '')
     .replace(/#\d+/g, '')
     .replace(/\b(ep(isodio)?|cap(itulo|ítulo)?)\.?\s*\d+\b/ig, '')

@@ -1,177 +1,144 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import Billboard from '../../../components/rol/Billboard.astro';
-import Art from '../../../components/rol/Art.astro';
-import { allSeries, formatDuration } from '../../../lib/catalog';
+import Hero from '../../../components/rol/Hero.astro';
+import EpisodeCard from '../../../components/rol/EpisodeCard.astro';
+import SeriesCard from '../../../components/rol/SeriesCard.astro';
+import Row from '../../../components/rol/Row.astro';
+import EpisodeIndex from '../../../components/rol/EpisodeIndex.astro';
+import { allSeries, allEpisodes, formatDuration } from '../../../lib/catalog';
 import type { Series } from '../../../lib/types';
 
 export const getStaticPaths = () => allSeries.map((series) => ({ params: { serie: series.slug }, props: { series } }));
 const { series: s } = Astro.props as { series: Series };
-const multi = s.seasons.length > 1;
+const others = allSeries.filter((x) => x.slug !== s.slug);
+const recap = s.seasons.flatMap((x) => x.episodes).filter((e) => e.synopsis.logline || e.synopsis.summary);
+const channel = allEpisodes(s).find((e) => (e as any).channel) as any;
+const years = allEpisodes(s).map((e) => e.publishedAt?.slice(0, 4)).filter(Boolean).sort();
+const span = years.length ? (years[0] === years.at(-1) ? years[0] : `${years[0]}–${years.at(-1)}`) : s.year;
 ---
-<Base title={s.title} description={s.tagline ?? s.synopsis} accent={s.color}>
-  <Billboard series={s} eyebrow={s.kind ?? 'Serie'} compact />
+<Base title={s.title} description={s.tagline ?? s.synopsis} accent={s.color} image={s.backdrop ? `https://i.ytimg.com/vi/${s.backdrop}/maxresdefault.jpg` : undefined}>
+  <Hero slides={[s]} detail />
 
-  <div class="layout wrap">
-    <section class="episodes" aria-labelledby="eps-h">
-      <header class="sec-head">
-        <h2 id="eps-h">Episodios</h2>
-        {multi && (
-          <div class="seasons" role="tablist" aria-label="Temporadas">
-            {s.seasons.map((x, i) => (
-              <button role="tab" type="button" aria-selected={i === 0 ? 'true' : 'false'} data-season-tab={x.number}>
-                <span class="label">{x.special ? "Especial" : `T${x.number}`}</span> {x.title}
-              </button>
-            ))}
-          </div>
-        )}
-      </header>
-
-      {s.seasons.map((season, si) => (
-        <ol class="ep-list" data-season={season.number} hidden={si > 0}>
-          {season.episodes.map((e) => (
-            <li>
-              <a href={e.href} class="ep-row" data-ep={e.id}>
-                <span class="n display">{String(e.number).padStart(2, '0')}</span>
-                <div class="thumb">
-                  <Art thumb={e.thumb} color={s.color} label={String(e.number).padStart(2, '0')} caption={s.title} />
-                  <span class="bar"><span></span></span>
-                </div>
-                <div class="body">
-                  <div class="top">
-                    <h3>{e.title}</h3>
-                    <span class="label">{formatDuration(e.duration)}</span>
-                  </div>
-                  {e.synopsis.logline && <p>{e.synopsis.logline}</p>}
-                </div>
-              </a>
-            </li>
+  <section class="episodes" data-reveal>
+    <header class="wrap head">
+      <h2>Episodios</h2>
+      {s.seasons.length > 1 && (
+        <div class="segmented" role="tablist" aria-label="Temporadas" data-seasons>
+          <span class="seg-ind" aria-hidden="true"></span>
+          {s.seasons.map((x, i) => (
+            <button role="tab" type="button" aria-selected={i === 0 ? 'true' : 'false'} data-season-tab={x.number}>
+              {x.special ? 'Especial' : `Temporada ${x.number}`}
+            </button>
           ))}
-        </ol>
-      ))}
-    </section>
+        </div>
+      )}
+    </header>
+    {s.seasons.map((season, si) => (
+      <div class="season" data-season={season.number} hidden={si > 0}>
+        <Row title={season.special ? season.title : `${season.episodes.length} episodios`}>
+          {season.episodes.map((e) => <EpisodeCard episode={e} series={s} detailed />)}
+        </Row>
+      </div>
+    ))}
+  </section>
 
-    <aside class="side">
-      <section class="catchup">
-        <span class="label">Ponte al día</span>
-        <h2>La historia hasta ahora</h2>
-        {s.seasons.map((season) => (
-          <details open={s.seasons.length === 1}>
-            <summary>{multi ? `Temporada ${season.number} · ${season.title}` : season.title}</summary>
-            <ol>
-              {season.episodes.filter((e) => e.synopsis.logline || e.synopsis.summary).map((e) => (
-                <li><a href={e.href}><b>{e.number}.</b> {e.synopsis.logline ?? e.synopsis.summary}</a></li>
-              ))}
-            </ol>
-          </details>
+  {recap.length > 0 && (
+    <section class="recap wrap" data-reveal>
+      <h2>Ponte al día</h2>
+      <ol>
+        {recap.map((e) => (
+          <li><a href={e.href}><span class="n">{e.number}</span><span>{e.synopsis.logline ?? e.synopsis.summary}</span></a></li>
         ))}
-      </section>
-
-      {s.tags?.length ? (
-        <p class="tags">{s.tags.map((t) => <span>{t}</span>)}</p>
-      ) : null}
-    </aside>
-  </div>
+      </ol>
+    </section>
+  )}
 
   {s.cast?.length ? (
-    <section class="cast wrap" aria-labelledby="cast-h">
-      <h2 id="cast-h">Reparto</h2>
+    <section class="cast wrap" data-reveal>
+      <h2>Reparto</h2>
       <ul>
-        {s.cast.map((c, i) => (
-          <li class="sheet" style={`--i:${i}`}>
-            <div class="crest display" aria-hidden="true">{((w) => (w.length > 1 ? w[0][0] + w[w.length - 1][0] : w[0].slice(0, 2)))(c.name.replace(/["“”][^"“”]*["“”]/g, '').trim().split(/\s+/))}</div>
-            <div>
-              <span class="label">{c.role}</span>
-              <h3>{c.name}</h3>
-              {c.played_by && <p class="by">Interpretado por <b>{c.played_by}</b></p>}
-              {c.bio && <p class="bio">{c.bio}</p>}
-            </div>
+        {s.cast.map((c) => (
+          <li>
+            <span class="avatar" aria-hidden="true">{c.name.replace(/["“”][^"“”]*["“”]/g, '').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('')}</span>
+            <strong>{c.name}</strong>
+            <span class="muted">{c.role}{c.played_by ? ` · ${c.played_by}` : ''}</span>
           </li>
         ))}
       </ul>
     </section>
   ) : null}
+
+  <section class="info wrap" data-reveal>
+    <h2>Información</h2>
+    <dl>
+      <div><dt>Género</dt><dd>{s.kind}</dd></div>
+      {span && <div><dt>Emisión</dt><dd>{span}</dd></div>}
+      <div><dt>Episodios</dt><dd>{s.episodeCount}</dd></div>
+      {s.runtime > 0 && <div><dt>Duración total</dt><dd>{formatDuration(s.runtime)}</dd></div>}
+      {s.views > 0 && <div><dt>Vistas en YouTube</dt><dd>{s.views.toLocaleString('es-CO')}</dd></div>}
+      {channel?.channel && <div><dt>Canal</dt><dd>{channel.channel}</dd></div>}
+    </dl>
+  </section>
+
+  {others.length > 0 && (
+    <Row title="Más series">
+      {others.map((x) => <SeriesCard series={x} />)}
+    </Row>
+  )}
+
+  <EpisodeIndex />
 </Base>
 
 <script>
-  import { paintCards, readAll, isFinished } from '../../../lib/progress';
+  import { paintCards } from '../../../lib/progress';
 
   function init() {
-    const tabs = document.querySelectorAll<HTMLButtonElement>('[data-season-tab]');
+    paintCards();
+    const seg = document.querySelector<HTMLElement>('[data-seasons]');
+    if (!seg) return;
+    const ind = seg.querySelector<HTMLElement>('.seg-ind')!;
+    const tabs = [...seg.querySelectorAll<HTMLButtonElement>('[data-season-tab]')];
+    const place = (t: HTMLElement) => { ind.style.transform = `translateX(${t.offsetLeft - 4}px)`; ind.style.width = `${t.offsetWidth}px`; };
+    place(tabs[0]);
     tabs.forEach((tab) => tab.addEventListener('click', () => {
       tabs.forEach((t) => t.setAttribute('aria-selected', String(t === tab)));
-      document.querySelectorAll<HTMLElement>('[data-season]').forEach((l) => (l.hidden = l.dataset.season !== tab.dataset.seasonTab));
+      place(tab);
+      document.querySelectorAll<HTMLElement>('[data-season]').forEach((l) => {
+        const show = l.dataset.season === tab.dataset.seasonTab;
+        l.hidden = !show;
+        if (show) l.animate([{ opacity: 0, transform: 'translateX(24px)' }, { opacity: 1, transform: 'none' }], { duration: 500, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+      });
     }));
-    paintCards();
-
-    // El botón principal pasa a "Continuar" si el fan ya empezó la serie
-    const btn = document.querySelector<HTMLAnchorElement>('[data-resume]');
-    if (!btn) return;
-    const all = readAll();
-    const mine = Object.entries(all).filter(([, p]) => p.series === btn.dataset.resume).sort((a, b) => b[1].at - a[1].at)[0];
-    if (!mine) return;
-    const rows = [...document.querySelectorAll<HTMLAnchorElement>('.ep-row')];
-    const i = rows.findIndex((r) => r.dataset.ep === mine[0]);
-    const target = isFinished(mine[1]) ? rows[i + 1] : rows[i];
-    if (!target) return;
-    btn.href = target.href;
-    btn.querySelector('[data-resume-label]')!.textContent = `Continuar: ${target.querySelector('h3')?.textContent ?? ''}`;
   }
   document.addEventListener('astro:page-load', init);
 </script>
 
 <style>
-  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px); gap: clamp(32px, 5vw, 80px); margin-top: 24px; }
-  h2 { font-size: 1.5rem; font-weight: 760; font-stretch: 90%; }
-  .sec-head { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
-  .seasons { display: flex; gap: 4px; flex-wrap: wrap; }
-  .seasons button { padding: 8px 14px; border-radius: var(--radius); font-weight: 600; font-size: 0.9rem; color: var(--muted); border: 1px solid transparent; }
-  .seasons button .label { color: inherit; margin-right: 4px; }
-  .seasons button[aria-selected='true'] { color: var(--paper); border-color: var(--line-strong); background: var(--ink-2); }
+  h2 { font-size: clamp(1.2rem, 0.8vw + 1rem, 1.55rem); font-weight: 760; letter-spacing: -0.025em; }
+  .episodes { margin-top: 8px; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .episodes :global(.row) { margin-top: 18px; }
+  .episodes :global(.row h2) { font-size: 1rem; color: var(--text-2); font-weight: 600; letter-spacing: -0.01em; }
 
-  .ep-list { list-style: none; padding: 0; }
-  .ep-row { display: grid; grid-template-columns: 64px 220px minmax(0, 1fr); gap: 20px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line); transition: background-color 0.2s; }
-  .ep-row:hover { background: linear-gradient(90deg, transparent, var(--ink-2) 20%, var(--ink-2) 80%, transparent); }
-  .n { font-size: 3.4rem; color: transparent; -webkit-text-stroke: 1.5px var(--faint); transition: -webkit-text-stroke-color 0.2s; }
-  .ep-row:hover .n { -webkit-text-stroke-color: var(--accent, var(--signal)); }
-  .thumb { position: relative; }
-  .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgb(0 0 0 / 0.5); display: none; }
-  .bar span { display: block; height: 100%; width: var(--p); background: var(--signal); }
-  [data-progress] .bar { display: block; }
-  [data-progress='done'] .n { -webkit-text-stroke-color: var(--signal); }
-  .top { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
-  h3 { font-size: 1.08rem; font-weight: 680; line-height: 1.3; }
-  .body p { margin-top: 6px; color: var(--muted); font-size: 0.95rem; text-wrap: pretty; }
+  .segmented { position: relative; display: inline-flex; padding: 4px; border-radius: 10px; background: rgb(255 255 255 / 0.07); box-shadow: inset 0 0 0 1px var(--line); }
+  .seg-ind { position: absolute; top: 4px; bottom: 4px; left: 4px; border-radius: 7px; background: rgb(255 255 255 / 0.16); box-shadow: 0 2px 10px rgb(0 0 0 / 0.3); transition: transform 0.5s var(--spring), width 0.5s var(--spring); }
+  .segmented button { position: relative; height: 32px; padding: 0 14px; border-radius: 7px; font-size: 0.86rem; font-weight: 600; color: var(--text-2); transition: color 0.2s; }
+  .segmented button[aria-selected='true'] { color: var(--text); }
 
-  .side { display: grid; gap: 28px; align-content: start; position: sticky; top: 92px; }
-  .catchup { background: var(--ink-2); border: 1px solid var(--line); border-top: 3px solid var(--accent, var(--signal)); padding: 22px; display: grid; gap: 12px; }
-  .catchup h2 { font-size: 1.25rem; }
-  details { border-top: 1px solid var(--line); padding-top: 12px; }
-  summary { cursor: pointer; font-weight: 640; font-size: 0.95rem; }
-  details ol { list-style: none; padding: 12px 0 0; display: grid; gap: 10px; font-size: 0.9rem; color: rgb(241 234 219 / 0.8); }
-  details a:hover { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
-  details b { color: var(--accent, var(--signal)); font-weight: 700; }
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tags span { padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 99px; font-size: 0.8rem; color: var(--muted); }
+  .recap { margin-top: 64px; display: grid; gap: 18px; }
+  .recap ol { list-style: none; padding: 0; columns: 2 360px; column-gap: 48px; }
+  .recap li { break-inside: avoid; border-top: 1px solid var(--line); }
+  .recap a { display: grid; grid-template-columns: 36px 1fr; gap: 8px; padding: 12px 0; font-size: 0.94rem; color: var(--text-2); transition: color 0.2s; }
+  .recap a:hover { color: var(--text); }
+  .recap .n { font-weight: 700; color: var(--text-3); font-variant-numeric: tabular-nums; }
 
-  .cast { margin-top: 96px; }
-  .cast h2 { margin-bottom: 24px; }
-  .cast ul { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
-  .sheet { background: var(--ink); padding: 24px; display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 18px; }
-  .crest { width: 72px; height: 88px; display: grid; place-items: center; font-size: 2.6rem; background: var(--accent, var(--signal)); color: var(--ink); clip-path: polygon(0 0, 100% 0, 100% 86%, 50% 100%, 0 86%); }
-  .sheet h3 { font-size: 1.3rem; font-stretch: 85%; font-weight: 780; margin-top: 2px; }
-  .by { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
-  .by b { color: var(--paper); font-weight: 600; }
-  .bio { margin-top: 10px; font-size: 0.95rem; color: rgb(241 234 219 / 0.85); }
+  .cast { margin-top: 64px; display: grid; gap: 20px; }
+  .cast ul { list-style: none; padding: 0; display: flex; gap: 28px; overflow-x: auto; scrollbar-width: none; }
+  .cast li { display: grid; justify-items: center; text-align: center; gap: 4px; width: 128px; flex-shrink: 0; font-size: 0.88rem; }
+  .avatar { width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 8px; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.04em; background: radial-gradient(circle at 30% 20%, color-mix(in oklab, var(--accent, #666), white 20%), color-mix(in oklab, var(--accent, #333), black 50%)); }
 
-  @media (max-width: 960px) {
-    .layout { grid-template-columns: 1fr; }
-    .side { position: static; }
-  }
-  @media (max-width: 640px) {
-    .ep-row { grid-template-columns: 120px minmax(0, 1fr); gap: 14px; }
-    .n { display: none; }
-    .body p { display: none; }
-    .top { flex-direction: column; gap: 2px; }
-  }
+  .info { margin-top: 64px; display: grid; gap: 18px; }
+  dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px 32px; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  dt { font-size: 0.8rem; color: var(--text-3); font-weight: 600; }
+  dd { margin: 2px 0 0; font-weight: 560; }
 </style>

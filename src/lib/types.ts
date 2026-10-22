@@ -48,6 +48,7 @@ export interface SeriesConfig {
   tags?: string[];
   featured?: boolean;
   start_here?: boolean;
+  backdrop?: string; // id del video cuya miniatura representa la serie
   demo?: boolean;
   seasons: SeasonConfig[];
   episodes?: Record<string, { title?: string; synopsis?: string }>;
@@ -81,7 +82,7 @@ export interface Series extends Omit<SeriesConfig, 'seasons' | 'episodes'> {
   episodeCount: number;
   runtime: number; // segundos totales
   views: number;
-  poster?: string;
+  backdrop?: string; // id de video
   href: string;
   lastPublished?: string;
 }

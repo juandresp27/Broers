@@ -1,0 +1,9 @@
+---
+// Orden de episodios por serie, para que el navegador sepa cuál sigue sin pedir nada al servidor.
+import { allSeries, allEpisodes } from '../../lib/catalog';
+const index = Object.fromEntries(allSeries.map((s) => [s.slug, allEpisodes(s).map((e) => {
+  const special = s.seasons.find((x) => x.number === e.season)?.special;
+  return { id: e.id, href: e.href, n: special ? 'Especial' : s.seasons.filter((x) => !x.special).length > 1 ? `T${e.season} E${e.number}` : `Episodio ${e.number}` };
+})]));
+---
+<script type="application/json" id="episode-order" set:html={JSON.stringify(index)} />

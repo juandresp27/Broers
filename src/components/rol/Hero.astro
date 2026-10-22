@@ -1,0 +1,167 @@
+---
+import type { Series } from '../../lib/types';
+import { allEpisodes } from '../../lib/catalog';
+import Art from './Art.astro';
+
+interface Props { slides: Series[]; detail?: boolean }
+const { slides, detail = false } = Astro.props;
+const DURATION = 9000;
+---
+<section class:list={['hero', { detail }]} data-hero style={`--dur:${DURATION}ms`} aria-roledescription={detail ? undefined : 'carrusel'}>
+  {slides.map((s, i) => {
+    const first = allEpisodes(s)[0];
+    const hours = Math.round(s.runtime / 3600);
+    return (
+      <article class:list={['slide', { active: i === 0 }]} data-slide={i} aria-hidden={i === 0 ? undefined : 'true'} style={`--c:${s.color}`}>
+        <div class="bg">
+          <Art video={s.backdrop} hd color={s.color} eager={i === 0} name={detail ? 'series-media' : undefined} />
+        </div>
+        <div class="content wrap">
+          <span class="eyebrow s1">{s.kind}</span>
+          {detail ? <h1 class="title-xl s2">{s.title}</h1> : <h2 class="title-xl s2">{s.title}</h2>}
+          <div class="meta s3">
+            {s.year && <span>{s.year}</span>}
+            <span>{s.seasons.filter((x) => !x.special).length > 1 ? `${s.seasons.filter((x) => !x.special).length} temporadas` : `${s.episodeCount} episodios`}</span>
+            {hours > 0 && <span>{hours} h de historia</span>}
+            {s.tags?.slice(0, 2).map((t) => <span class="tag">{t}</span>)}
+          </div>
+          {(s.tagline || s.synopsis) && <p class="lede s4">{detail ? s.synopsis ?? s.tagline : s.tagline ?? s.synopsis}</p>}
+          <div class="actions s5">
+            {first && (
+              <a class="btn btn-primary" href={first.href} data-resume={s.slug}>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+                <span data-resume-label>Ver episodio 1</span>
+              </a>
+            )}
+            {!detail && <a class="btn btn-glass" href={s.href}>Más información</a>}
+          </div>
+        </div>
+      </article>
+    );
+  })}
+
+  {slides.length > 1 && (
+    <div class="dots wrap" role="tablist" aria-label="Series destacadas">
+      {slides.map((s, i) => (
+        <button type="button" role="tab" aria-label={s.title} aria-selected={i === 0 ? 'true' : 'false'} data-dot={i}><span></span></button>
+      ))}
+    </div>
+  )}
+</section>
+
+<script>
+  import { readAll, isFinished } from '../../lib/progress';
+
+  function hero() {
+    const root = document.querySelector<HTMLElement>('[data-hero]');
+    if (!root || root.dataset.wired) return;
+    root.dataset.wired = '1';
+    const slides = [...root.querySelectorAll<HTMLElement>('[data-slide]')];
+    const dots = [...root.querySelectorAll<HTMLButtonElement>('[data-dot]')];
+    let index = 0;
+
+    resumeButtons(root);
+    if (slides.length < 2) return;
+
+    // El avance lo marca la barrita: cuando termina su animación pasa a la siguiente serie.
+    // Así pausar (hover o pestaña oculta) congela barra y carrusel a la vez.
+    const go = (n: number) => {
+      index = (n + slides.length) % slides.length;
+      slides.forEach((s, i) => {
+        s.classList.toggle('active', i === index);
+        s.toggleAttribute('aria-hidden', i !== index);
+      });
+      dots.forEach((d, i) => {
+        d.setAttribute('aria-selected', String(i === index));
+        const bar = d.querySelector('span')!;
+        bar.style.animation = 'none';
+        void bar.offsetWidth;
+        bar.style.animation = '';
+      });
+    };
+    dots.forEach((d, i) => {
+      d.addEventListener('click', () => go(i));
+      d.querySelector('span')!.addEventListener('animationend', () => i === index && go(index + 1));
+    });
+    root.addEventListener('mouseenter', () => root.classList.add('paused'));
+    root.addEventListener('mouseleave', () => root.classList.remove('paused'));
+    // Deslizar con el dedo en celular
+    let x0: number | null = null;
+    root.addEventListener('touchstart', (e) => (x0 = e.touches[0].clientX), { passive: true });
+    root.addEventListener('touchend', (e) => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 50) go(index + (dx < 0 ? 1 : -1));
+      x0 = null;
+    });
+  }
+
+  /** Si el fan ya empezó una serie, el botón principal dice "Continuar" y lleva al episodio que toca. */
+  function resumeButtons(root: HTMLElement) {
+    const all = readAll();
+    const pool = JSON.parse(document.getElementById('episode-order')?.textContent ?? '{}') as Record<string, { id: string; href: string; title: string; n: string }[]>;
+    root.querySelectorAll<HTMLAnchorElement>('[data-resume]').forEach((btn) => {
+      const list = pool[btn.dataset.resume!];
+      if (!list) return;
+      const mine = Object.entries(all).filter(([, p]) => p.series === btn.dataset.resume).sort((a, b) => b[1].at - a[1].at)[0];
+      if (!mine) return;
+      const i = list.findIndex((e) => e.id === mine[0]);
+      const target = isFinished(mine[1]) ? list[i + 1] : list[i];
+      if (!target) return;
+      btn.href = target.href;
+      btn.querySelector('[data-resume-label]')!.textContent = `Continuar · ${target.n}`;
+    });
+  }
+
+  document.addEventListener('astro:page-load', hero);
+</script>
+
+<style>
+  .hero { position: relative; height: min(92vh, 900px); min-height: 560px; overflow: hidden; background: var(--bg); }
+  .detail { height: min(86vh, 820px); }
+  .slide { position: absolute; inset: 0; display: grid; align-items: end; opacity: 0; visibility: hidden; transition: opacity 1.1s var(--ease-out), visibility 0s 1.1s; }
+  .slide.active { opacity: 1; visibility: visible; transition: opacity 1.1s var(--ease-out), visibility 0s; z-index: 1; }
+
+  .bg { position: absolute; inset: 0; }
+  .bg :global(.art) { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; }
+  .bg :global(img) { transform: scale(1.12); transition: transform 10s linear, opacity 0.8s; }
+  .slide.active .bg :global(img) { transform: scale(1.02); }
+  .bg::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      linear-gradient(90deg, rgb(10 10 12 / 0.92) 0%, rgb(10 10 12 / 0.55) 34%, transparent 66%),
+      linear-gradient(0deg, var(--bg) 0%, rgb(10 10 12 / 0.6) 22%, transparent 52%),
+      radial-gradient(80% 60% at 10% 100%, color-mix(in oklab, var(--c), transparent 70%), transparent 70%);
+  }
+
+  .content { position: relative; z-index: 2; display: grid; gap: 16px; justify-items: start; max-width: 760px; padding-bottom: clamp(88px, 12vh, 132px); }
+  .detail .content { padding-bottom: clamp(48px, 7vh, 80px); }
+  .content .lede { color: rgb(245 245 247 / 0.86); max-width: 52ch; font-size: clamp(1rem, 0.5vw + 0.9rem, 1.2rem); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .tag { text-transform: capitalize; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+
+  /* Entrada escalonada del texto en cada cambio de slide */
+  .s1, .s2, .s3, .s4, .s5 { opacity: 0; transform: translateY(22px); transition: opacity 0.7s var(--ease-out), transform 0.9s var(--spring); }
+  .active :is(.s1, .s2, .s3, .s4, .s5) { opacity: 1; transform: none; }
+  .active .s1 { transition-delay: 0.25s; }
+  .active .s2 { transition-delay: 0.32s; }
+  .active .s3 { transition-delay: 0.42s; }
+  .active .s4 { transition-delay: 0.5s; }
+  .active .s5 { transition-delay: 0.58s; }
+
+  .dots { position: absolute; z-index: 3; right: 0; bottom: clamp(40px, 6vh, 64px); display: flex; gap: 8px; }
+  .dots button { width: 28px; height: 4px; border-radius: 4px; background: rgb(255 255 255 / 0.28); overflow: hidden; padding: 0; transition: width 0.5s var(--spring), background-color 0.3s; }
+  .dots button:hover { background: rgb(255 255 255 / 0.5); }
+  .dots button[aria-selected='true'] { width: 56px; }
+  .dots span { display: block; height: 100%; width: 0; background: var(--text); border-radius: inherit; }
+  .dots button[aria-selected='true'] span { animation: fill var(--dur) linear forwards; }
+  .paused .dots button[aria-selected='true'] span { animation-play-state: paused; }
+  @keyframes fill { to { width: 100%; } }
+
+  @media (max-width: 760px) {
+    .hero { height: 78vh; min-height: 520px; }
+    .bg::after { background: linear-gradient(0deg, var(--bg) 8%, rgb(10 10 12 / 0.7) 45%, rgb(10 10 12 / 0.15) 75%); }
+    .dots { left: 0; right: auto; bottom: 28px; }
+    .content { padding-bottom: 72px; }
+  }
+</style>

@@ -1,40 +1,42 @@
 ---
-// Imagen de un episodio o serie. Con miniatura real: foto. Sin miniatura (demo): tarjeta tipográfica con el color de la serie.
+// Imagen 16:9 de un video de YouTube. Con `hd` pide la versión grande y, si YouTube no la tiene, cae a la normal.
 interface Props {
-  thumb?: string;
-  color: string;
-  label: string; // texto grande de la tarjeta (número de episodio o inicial)
-  caption?: string;
-  duotone?: boolean;
+  video?: string; // id del video
+  src?: string;
+  hd?: boolean;
+  color?: string;
+  fallback?: string; // texto si no hay imagen
   eager?: boolean;
+  name?: string; // transition:name para animar entre páginas
   class?: string;
 }
-const { thumb, color, label, caption, duotone = false, eager = false, class: cls } = Astro.props;
+const { video, src, hd = false, color = '#222', fallback, eager = false, name, class: cls } = Astro.props;
+const url = src ?? (video ? `https://i.ytimg.com/vi/${video}/${hd ? 'maxresdefault' : 'hqdefault'}.jpg` : undefined);
+const lowres = video ? `https://i.ytimg.com/vi/${video}/hqdefault.jpg` : undefined;
 ---
-<div class:list={['art', { duotone }, cls]} style={`--c:${color}`}>
-  {thumb ? (
-    <img src={thumb} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : undefined} />
+<div class:list={['art', cls]} style={`--c:${color}`} transition:name={name}>
+  {url ? (
+    <img
+      src={url}
+      alt=""
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+      fetchpriority={eager ? 'high' : 'auto'}
+      data-fallback={hd ? lowres : undefined}
+      onload="this.dataset.fallback && this.naturalWidth <= 120 ? (this.src = this.dataset.fallback, delete this.dataset.fallback) : this.classList.add('ready')"
+      onerror="this.dataset.fallback ? (this.src = this.dataset.fallback, delete this.dataset.fallback) : this.remove()"
+    />
   ) : (
-    <div class="card" aria-hidden="true">
-      <span class="num display">{label}</span>
-      {caption && <span class="cap label">{caption}</span>}
-    </div>
+    <span class="ph">{fallback}</span>
   )}
 </div>
 
 <style>
-  .art { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--ink-3); border-radius: var(--radius); isolation: isolate; }
-  .art img { width: 100%; height: 100%; object-fit: cover; }
-  .duotone img { filter: grayscale(1) contrast(1.15) brightness(0.9); }
-  .duotone::after { content: ''; position: absolute; inset: 0; background: var(--c); mix-blend-mode: multiply; opacity: 0.85; }
-  .card {
-    position: absolute; inset: 0; display: grid; align-content: end; padding: 7%;
-    background:
-      repeating-linear-gradient(-58deg, transparent 0 22px, rgb(0 0 0 / 0.07) 22px 23px),
-      radial-gradient(120% 90% at 85% 10%, color-mix(in oklab, var(--c), white 18%), var(--c) 45%, color-mix(in oklab, var(--c), black 55%));
+  .art {
+    position: relative; aspect-ratio: 16 / 9; overflow: hidden; isolation: isolate;
+    background: radial-gradient(120% 120% at 100% 0%, color-mix(in oklab, var(--c), white 10%), color-mix(in oklab, var(--c), black 70%));
   }
-  .num { position: absolute; right: 5%; bottom: -12%; font-size: 92cqh; line-height: 1; color: transparent; -webkit-text-stroke: 2px rgb(255 255 255 / 0.55); }
-  .cap { position: relative; color: rgb(0 0 0 / 0.72); }
-  .art { container-type: size; }
-  @container (max-width: 220px) { .cap { display: none; } }
+  .art img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.6s var(--ease-out), transform 0.8s var(--spring), filter 0.4s; }
+  .art img:global(.ready) { opacity: 1; }
+  .ph { position: absolute; inset: auto 0 0; padding: 8%; font-weight: 800; font-size: 1.1rem; letter-spacing: -0.03em; }
 </style>

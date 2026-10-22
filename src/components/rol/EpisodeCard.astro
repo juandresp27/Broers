@@ -3,31 +3,42 @@ import type { Episode, Series } from '../../lib/types';
 import { formatDuration } from '../../lib/catalog';
 import Art from './Art.astro';
 
-interface Props { episode: Episode; series: Series; showSeries?: boolean }
-const { episode: e, series: s, showSeries = false } = Astro.props;
-const special = s.seasons.find((x) => x.number === e.season)?.special;
-const code = special ? 'Especial' : s.seasons.length > 1 ? `T${e.season}:E${e.number}` : `Ep. ${e.number}`;
+interface Props { episode: Episode; series: Series; showSeries?: boolean; detailed?: boolean }
+const { episode: e, series: s, showSeries = false, detailed = false } = Astro.props;
+const season = s.seasons.find((x) => x.number === e.season);
+const code = season?.special ? 'Especial' : s.seasons.filter((x) => !x.special).length > 1 ? `T${e.season} · E${e.number}` : `Episodio ${e.number}`;
 ---
-<a href={e.href} class="ep-card" data-ep={e.id}>
+<a href={e.href} class:list={['ep-card', { detailed }]} data-ep={e.id} data-vt="ep-media">
   <div class="frame">
-    <Art thumb={e.thumb} color={s.color} label={String(e.number).padStart(2, '0')} caption={s.title} />
+    <Art video={e.demo ? undefined : e.id} color={s.color} fallback={e.title} />
+    <span class="play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+    {e.duration ? <span class="dur">{formatDuration(e.duration)}</span> : null}
     <span class="progress" aria-hidden="true"><span></span></span>
   </div>
   <div class="text">
-    <span class="label">{showSeries ? `${s.title} · ${code}` : code}{e.duration ? ` · ${formatDuration(e.duration)}` : ''}</span>
+    <span class="eyebrow">{showSeries ? `${s.title} · ${code}` : code}</span>
     <span class="title">{e.title}</span>
+    {detailed && (e.synopsis.logline || e.synopsis.summary) && <p class="syn">{e.synopsis.logline ?? e.synopsis.summary}</p>}
   </div>
 </a>
 
 <style>
-  .ep-card { display: grid; gap: 10px; width: var(--card-w, clamp(240px, 26vw, 360px)); }
-  .frame { position: relative; transition: transform 0.35s var(--ease); }
-  .ep-card:hover .frame { transform: translateY(-4px); }
-  .frame :global(.art) { box-shadow: 0 0 0 1px var(--line); transition: box-shadow 0.25s; }
-  .ep-card:hover .frame :global(.art) { box-shadow: 0 0 0 2px var(--paper); }
-  .progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgb(0 0 0 / 0.5); display: none; }
-  .progress span { display: block; height: 100%; width: var(--p, 0%); background: var(--signal); }
+  .ep-card { display: grid; gap: 12px; width: var(--card-w, clamp(250px, 23vw, 340px)); align-content: start; }
+  .frame { position: relative; border-radius: var(--r); overflow: hidden; transform: translateZ(0); box-shadow: 0 0 0 1px var(--line); transition: transform 0.5s var(--spring), box-shadow 0.5s var(--spring); }
+  .ep-card:hover .frame { transform: scale(1.045); box-shadow: var(--shadow-card), 0 0 0 1px var(--line-strong); }
+  .ep-card:active .frame { transform: scale(0.98); transition-duration: 0.15s; }
+  .frame :global(img) { transition: filter 0.4s; }
+  .ep-card:hover .frame :global(img) { filter: brightness(0.82); }
+  .play { position: absolute; inset: 0; margin: auto; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: #000; background: rgb(255 255 255 / 0.92); opacity: 0; transform: scale(0.7); transition: opacity 0.3s, transform 0.5s var(--spring); }
+  .play svg { width: 22px; margin-left: 3px; }
+  .ep-card:hover .play { opacity: 1; transform: scale(1); }
+  .dur { position: absolute; right: 8px; bottom: 8px; padding: 2px 7px; border-radius: 6px; font-size: 0.74rem; font-weight: 650; background: rgb(0 0 0 / 0.62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .progress { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 4px; border-radius: 4px; background: rgb(255 255 255 / 0.28); overflow: hidden; display: none; }
+  .progress span { display: block; height: 100%; width: var(--p, 0%); background: var(--text); border-radius: inherit; }
   :global([data-progress]) > .frame .progress { display: block; }
-  .text { display: grid; gap: 2px; }
-  .title { font-weight: 640; font-size: 1.02rem; line-height: 1.3; text-wrap: balance; }
+  :global([data-progress]) > .frame .dur { display: none; }
+  .text { display: grid; gap: 3px; padding-inline: 2px; }
+  .eyebrow { font-size: 0.72rem; }
+  .title { font-weight: 620; font-size: 1rem; line-height: 1.3; letter-spacing: -0.01em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .syn { margin-top: 4px; font-size: 0.88rem; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 </style>

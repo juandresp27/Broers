@@ -1,18 +1,20 @@
 ---
-// Fila horizontal con desplazamiento por gestos o con flechas en escritorio.
-interface Props { title: string; note?: string; id?: string; hidden?: boolean }
-const { title, note, id, hidden } = Astro.props;
+// Fila horizontal ("shelf") con desplazamiento por gesto y flechas laterales al pasar el cursor.
+interface Props { title: string; note?: string; href?: string; id?: string; hidden?: boolean }
+const { title, note, href, id, hidden } = Astro.props;
 ---
-<section class="row" id={id} hidden={hidden} data-row>
+<section class="row" id={id} hidden={hidden} data-row data-reveal>
   <header class="wrap">
-    <h2>{title}</h2>
-    {note && <span class="label">{note}</span>}
-    <div class="arrows">
-      <button type="button" data-dir="-1" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <button type="button" data-dir="1" aria-label="Siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></button>
-    </div>
+    {href ? (
+      <a href={href} class="h"><h2>{title}</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></a>
+    ) : <h2 class="h">{title}</h2>}
+    {note && <span class="note">{note}</span>}
   </header>
-  <div class="track" data-track><slot /></div>
+  <div class="viewport">
+    <button type="button" class="arrow prev" data-dir="-1" aria-label="Anterior" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <div class="track" data-track><slot /></div>
+    <button type="button" class="arrow next" data-dir="1" aria-label="Siguiente" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
 </section>
 
 <script>
@@ -21,27 +23,44 @@ const { title, note, id, hidden } = Astro.props;
       if (row.dataset.wired) return;
       row.dataset.wired = '1';
       const track = row.querySelector<HTMLElement>('[data-track]')!;
-      row.querySelectorAll<HTMLButtonElement>('[data-dir]').forEach((b) =>
-        b.addEventListener('click', () => track.scrollBy({ left: Number(b.dataset.dir) * track.clientWidth * 0.85, behavior: 'smooth' })),
-      );
+      const [prev, next] = row.querySelectorAll<HTMLButtonElement>('.arrow');
+      const update = () => {
+        prev.hidden = track.scrollLeft < 8;
+        next.hidden = track.scrollLeft + track.clientWidth >= track.scrollWidth - 8;
+      };
+      [prev, next].forEach((b) => b.addEventListener('click', () => track.scrollBy({ left: Number(b.dataset.dir) * (track.clientWidth - 120), behavior: 'smooth' })));
+      track.addEventListener('scroll', update, { passive: true });
+      new ResizeObserver(update).observe(track);
     });
   }
   document.addEventListener('astro:page-load', wire);
 </script>
 
 <style>
-  .row { margin-top: clamp(40px, 6vw, 72px); }
-  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 16px; }
-  h2 { font-size: clamp(1.15rem, 1vw + 0.9rem, 1.5rem); font-weight: 760; font-stretch: 90%; letter-spacing: -0.01em; }
-  .arrows { margin-left: auto; display: flex; gap: 6px; }
-  .arrows button { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; transition: border-color 0.2s, background-color 0.2s; }
-  .arrows button:hover { border-color: var(--paper); background: var(--ink-3); }
-  .arrows svg { width: 16px; }
+  .row { margin-top: clamp(36px, 4.5vw, 60px); }
+  header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+  .h { display: inline-flex; align-items: center; gap: 4px; }
+  h2 { font-size: clamp(1.2rem, 0.8vw + 1rem, 1.55rem); font-weight: 760; letter-spacing: -0.025em; }
+  a.h svg { width: 20px; height: 20px; color: var(--text-3); transition: transform 0.4s var(--spring), color 0.2s; }
+  a.h:hover svg { transform: translateX(4px); color: var(--text); }
+  .note { font-size: 0.88rem; color: var(--text-3); }
+  .viewport { position: relative; }
   .track {
-    display: flex; gap: clamp(12px, 1.4vw, 20px); overflow-x: auto; scroll-snap-type: x mandatory;
-    padding: 6px var(--gutter) 14px; scroll-padding-inline: var(--gutter); scrollbar-width: none;
+    display: flex; gap: clamp(14px, 1.3vw, 22px); overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter);
+    padding: 22px var(--gutter) 26px; scrollbar-width: none;
   }
   .track::-webkit-scrollbar { display: none; }
   .track > :global(*) { scroll-snap-align: start; flex-shrink: 0; }
-  @media (hover: none), (max-width: 640px) { .arrows { display: none; } }
+  .arrow {
+    position: absolute; top: 22px; bottom: 26px; z-index: 5; width: var(--gutter); min-width: 44px;
+    display: grid; place-items: center; color: var(--text); opacity: 0; transition: opacity 0.3s;
+  }
+  .arrow svg { width: 30px; height: 30px; transition: transform 0.4s var(--spring); filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.6)); }
+  .arrow:hover svg { transform: scale(1.25); }
+  .prev { left: 0; background: linear-gradient(90deg, rgb(10 10 12 / 0.9), transparent); }
+  .next { right: 0; background: linear-gradient(-90deg, rgb(10 10 12 / 0.9), transparent); }
+  .viewport:hover .arrow { opacity: 1; }
+  .arrow[hidden] { display: none; }
+  @media (hover: none) { .arrow { display: none; } }
 </style>

@@ -1,51 +1,57 @@
 ---
 import Base from '../../layouts/Base.astro';
-import Billboard from '../../components/rol/Billboard.astro';
+import Hero from '../../components/rol/Hero.astro';
 import Row from '../../components/rol/Row.astro';
 import EpisodeCard from '../../components/rol/EpisodeCard.astro';
 import SeriesCard from '../../components/rol/SeriesCard.astro';
+import EpisodeIndex from '../../components/rol/EpisodeIndex.astro';
 import { allSeries, allEpisodes } from '../../lib/catalog';
 
-const featured = allSeries.find((s) => s.featured) ?? allSeries[0];
+const byViews = [...allSeries].sort((a, b) => b.views - a.views || b.episodeCount - a.episodeCount);
+const slides = [...allSeries.filter((s) => s.featured), ...byViews.filter((s) => !s.featured)].slice(0, 5);
 const startHere = allSeries.filter((s) => s.start_here);
-const top = [...allSeries].sort((a, b) => b.views - a.views || b.episodeCount - a.episodeCount).slice(0, 10);
 const bySlug = Object.fromEntries(allSeries.map((s) => [s.slug, s]));
 const everything = allSeries.flatMap((s) => allEpisodes(s));
-const latest = [...everything].sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? '')).slice(0, 12);
+const latest = [...everything].sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? '')).slice(0, 14);
+const mostViewed = [...everything].sort((a, b) => (b.views ?? 0) - (a.views ?? 0)).slice(0, 14);
 ---
 <Base title="Series" description="Todas las series de rol de JuanSGuarnizo, ordenadas por temporada y episodio.">
-  {featured && <Billboard series={featured} />}
+  <Hero slides={slides} />
 
-  <Row title="Continuar viendo" id="continue" hidden>
-    <!-- se llena en el navegador con el progreso guardado -->
-  </Row>
-
-  {startHere.length > 0 && (
-    <Row title="Empieza aquí" note="Series cortas o fáciles de seguir">
-      {startHere.map((s) => <SeriesCard series={s} />)}
+  <div class="shelves">
+    <Row title="Continuar viendo" id="continue" hidden>
+      <!-- se llena en el navegador con el progreso guardado -->
     </Row>
-  )}
 
-  <Row title="Lo más visto" note="Top de la comunidad">
-    {top.map((s, i) => <SeriesCard series={s} rank={i + 1} />)}
-  </Row>
-
-  <Row title="Recién subidos">
-    {latest.map((e) => <EpisodeCard episode={e} series={bySlug[e.series]} showSeries />)}
-  </Row>
-
-  {allSeries.map((s) => (
-    <Row title={s.title} note={s.kind}>
-      {allEpisodes(s).map((e) => <EpisodeCard episode={e} series={s} />)}
+    <Row title="Recién subidos">
+      {latest.map((e) => <EpisodeCard episode={e} series={bySlug[e.series]} showSeries />)}
     </Row>
-  ))}
 
-  <!-- Tarjetas de todos los episodios, para armar "Continuar viendo" sin pedir nada al servidor -->
+    <Row title="Top series" note="Por vistas en YouTube">
+      {byViews.slice(0, 10).map((s, i) => <SeriesCard series={s} rank={i + 1} />)}
+    </Row>
+
+    {startHere.length > 0 && (
+      <Row title="Empieza aquí" note="Cortas y fáciles de seguir">
+        {startHere.map((s) => <SeriesCard series={s} size="lg" />)}
+      </Row>
+    )}
+
+    <Row title="Los episodios más vistos">
+      {mostViewed.map((e) => <EpisodeCard episode={e} series={bySlug[e.series]} showSeries />)}
+    </Row>
+
+    {allSeries.map((s) => (
+      <Row title={s.title} href={s.href} note={s.kind}>
+        {allEpisodes(s).map((e) => <EpisodeCard episode={e} series={s} />)}
+      </Row>
+    ))}
+  </div>
+
+  <EpisodeIndex />
   <template id="ep-pool">
-    {allSeries.map((s) => allEpisodes(s).map((e, i, list) => (
-      <div data-pool={e.id} data-series={s.slug} data-next={list[i + 1]?.id ?? ''}>
-        <EpisodeCard episode={e} series={s} showSeries />
-      </div>
+    {allSeries.map((s) => allEpisodes(s).map((e) => (
+      <div data-pool={e.id}><EpisodeCard episode={e} series={s} showSeries /></div>
     )))}
   </template>
 </Base>
@@ -56,23 +62,24 @@ const latest = [...everything].sort((a, b) => (b.publishedAt ?? '').localeCompar
   function continueRow() {
     const row = document.getElementById('continue');
     const pool = document.getElementById('ep-pool') as HTMLTemplateElement | null;
+    const order = JSON.parse(document.getElementById('episode-order')?.textContent ?? '{}') as Record<string, { id: string }[]>;
     if (!row || !pool) return;
     const track = row.querySelector('[data-track]')!;
     track.replaceChildren();
     const all = readAll();
-    // El episodio más reciente de cada serie; si ya lo terminó, el siguiente.
-    const latestBySeries = new Map<string, [string, number]>();
+    // Por serie: el último episodio que tocó; si ya lo terminó, el siguiente.
+    const latest = new Map<string, [string, number]>();
     for (const [id, p] of Object.entries(all)) {
-      const prev = latestBySeries.get(p.series);
-      if (!prev || p.at > prev[1]) latestBySeries.set(p.series, [id, p.at]);
+      const prev = latest.get(p.series);
+      if (!prev || p.at > prev[1]) latest.set(p.series, [id, p.at]);
     }
-    const picks = [...latestBySeries.values()].sort((a, b) => b[1] - a[1]).map(([id]) => {
-      const node = pool.content.querySelector<HTMLElement>(`[data-pool="${CSS.escape(id)}"]`);
-      if (node && isFinished(all[id]) && node.dataset.next) return node.dataset.next;
-      return node ? id : null;
-    });
-    for (const id of picks) {
-      const node = id && pool.content.querySelector(`[data-pool="${CSS.escape(id)}"] > *`);
+    for (const [series, [id]] of [...latest].sort((a, b) => b[1][1] - a[1][1])) {
+      let pick = id;
+      if (isFinished(all[id])) {
+        const list = order[series] ?? [];
+        pick = list[list.findIndex((e) => e.id === id) + 1]?.id;
+      }
+      const node = pick && pool.content.querySelector(`[data-pool="${CSS.escape(pick)}"] > *`);
       if (node) track.append(node.cloneNode(true));
     }
     row.hidden = track.children.length === 0;
@@ -83,3 +90,7 @@ const latest = [...everything].sort((a, b) => (b.publishedAt ?? '').localeCompar
     paintCards();
   });
 </script>
+
+<style>
+  .shelves { position: relative; z-index: 2; margin-top: clamp(-80px, -6vw, -40px); }
+</style>

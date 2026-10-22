@@ -1,36 +1,39 @@
 ---
 import type { Series } from '../../lib/types';
 import Art from './Art.astro';
-interface Props { series: Series; rank?: number }
-const { series: s, rank } = Astro.props;
+interface Props { series: Series; rank?: number; size?: 'md' | 'lg' }
+const { series: s, rank, size = 'md' } = Astro.props;
 ---
-<a href={s.href} class:list={['series-card', { ranked: rank }]}>
-  {rank && <span class="rank display" aria-hidden="true">{rank}</span>}
-  <div class="poster">
-    <Art thumb={s.poster} color={s.color} label={s.title.slice(0, 1)} duotone class="tall" />
+<a href={s.href} class:list={['series-card', size, { ranked: rank }]} data-vt="series-media">
+  {rank && <span class="rank" aria-hidden="true">{rank}</span>}
+  <div class="tile">
+    <Art video={s.backdrop} color={s.color} />
+    <div class="shade"></div>
     <div class="over">
-      <span class="label">{s.kind}</span>
-      <span class="name display">{s.title}</span>
-      <span class="count">{s.episodeCount} episodios</span>
+      <span class="name">{s.title}</span>
+      <span class="sub">{s.kind} · {s.episodeCount} episodios</span>
     </div>
   </div>
 </a>
 
 <style>
-  .series-card { position: relative; display: flex; align-items: flex-end; width: var(--card-w, clamp(170px, 17vw, 240px)); }
-  .ranked { width: calc(var(--card-w, clamp(170px, 17vw, 240px)) * 1.45); }
+  .series-card { position: relative; display: flex; align-items: flex-end; flex-shrink: 0; }
+  .tile { position: relative; width: var(--card-w, clamp(280px, 30vw, 440px)); border-radius: var(--r); overflow: hidden; transform: translateZ(0); box-shadow: 0 0 0 1px var(--line); transition: transform 0.55s var(--spring), box-shadow 0.55s var(--spring); }
+  .lg .tile { width: clamp(300px, 42vw, 620px); }
+  .series-card:hover .tile { transform: scale(1.04); box-shadow: var(--shadow-card), 0 0 0 1px var(--line-strong); }
+  .series-card:active .tile { transform: scale(0.98); }
+  .tile :global(img) { transition: transform 1.2s var(--ease-out); }
+  .series-card:hover .tile :global(img) { transform: scale(1.06); }
+  .shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgb(0 0 0 / 0.82)); }
+  .over { position: absolute; inset: auto 0 0; padding: clamp(14px, 1.6vw, 22px); display: grid; gap: 2px; }
+  .name { font-weight: 800; font-size: clamp(1.3rem, 1.6vw, 1.9rem); letter-spacing: -0.035em; line-height: 1.05; text-shadow: 0 2px 20px rgb(0 0 0 / 0.5); }
+  .lg .name { font-size: clamp(1.6rem, 2.4vw, 2.6rem); }
+  .sub { font-size: 0.82rem; color: rgb(255 255 255 / 0.72); font-weight: 520; }
   .rank {
-    font-size: clamp(9rem, 15vw, 14rem); line-height: 0.74; margin-right: -0.12em; z-index: 0;
-    color: var(--ink); -webkit-text-stroke: 2px var(--line-strong); letter-spacing: -0.06em;
-    transition: -webkit-text-stroke-color 0.25s;
+    font-size: clamp(7rem, 11vw, 11rem); font-weight: 900; line-height: 0.78; letter-spacing: -0.08em; margin-right: -0.06em;
+    color: var(--bg); -webkit-text-stroke: 2px rgb(255 255 255 / 0.32); paint-order: stroke;
+    transition: -webkit-text-stroke-color 0.4s, transform 0.55s var(--spring);
   }
-  .series-card:hover .rank { -webkit-text-stroke-color: var(--signal); }
-  .poster { position: relative; flex: 1 0 auto; width: var(--card-w, clamp(170px, 17vw, 240px)); z-index: 1; transition: transform 0.35s var(--ease); }
-  .series-card:hover .poster { transform: translateY(-6px) rotate(-0.6deg); }
-  .poster :global(.tall) { aspect-ratio: 3 / 4.2; }
-  .poster :global(.tall .num) { font-size: 70cqh; right: auto; left: -4%; bottom: -10%; }
-  .over { position: absolute; inset: auto 0 0; padding: 14px; display: grid; gap: 6px; background: linear-gradient(transparent, rgb(0 0 0 / 0.65)); }
-  .over .label { color: rgb(255 255 255 / 0.8); }
-  .name { font-size: clamp(1.9rem, 2.6vw, 2.6rem); line-height: 0.88; }
-  .count { font-size: 0.8rem; color: rgb(255 255 255 / 0.75); }
+  .series-card:hover .rank { -webkit-text-stroke-color: rgb(255 255 255 / 0.85); transform: translateX(-6px); }
+  .ranked .tile { --card-w: clamp(220px, 22vw, 320px); }
 </style>

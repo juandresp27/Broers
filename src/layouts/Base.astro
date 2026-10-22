@@ -3,36 +3,58 @@ import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import SiteHeader from '../components/SiteHeader.astro';
 
-interface Props { title?: string; description?: string; accent?: string }
-const { title, description = 'La casa de los Broers: series de rol, clips, juegos y todo lo de JuanSGuarnizo.', accent } = Astro.props;
+interface Props { title?: string; description?: string; accent?: string; image?: string }
+const { title, description = 'La casa de los Broers: series de rol, clips, juegos y todo lo de JuanSGuarnizo.', accent, image } = Astro.props;
 const fullTitle = title ? `${title} · Broers` : 'Broers';
 ---
 <!doctype html>
 <html lang="es" style={accent ? `--accent:${accent}` : undefined}>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#0f0e0c" />
+    <meta name="theme-color" content="#0a0a0c" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
+    {image && <meta property="og:image" content={image} />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://i.ytimg.com" />
     <title>{fullTitle}</title>
+    <script is:inline>document.documentElement.classList.add('js')</script>
     <ClientRouter />
   </head>
   <body>
     <SiteHeader />
     <main id="main"><slot /></main>
     <footer class="site-footer wrap">
-      <p class="display">Broers</p>
-      <p class="muted">Hecho por la comunidad. No es un sitio oficial de JuanSGuarnizo.</p>
+      <span class="brand">Broers</span>
+      <p>Hecho por la comunidad para la comunidad. No es un sitio oficial de JuanSGuarnizo.</p>
     </footer>
+    <script>
+      // Aparición suave de las secciones al entrar en pantalla
+      function reveal() {
+        const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+          if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        }), { rootMargin: '0px 0px -8% 0px' });
+        document.querySelectorAll('[data-reveal]:not(.in)').forEach((el) => io.observe(el));
+      }
+      document.addEventListener('astro:after-swap', () => document.documentElement.classList.add('js'));
+      document.addEventListener('astro:page-load', reveal);
+
+      // La imagen de la tarjeta que tocaste "vuela" hasta su lugar en la página nueva
+      document.addEventListener('click', (e) => {
+        const a = (e.target as Element).closest<HTMLElement>('a[data-vt]');
+        const media = a?.querySelector<HTMLElement>('.art');
+        if (!a || !media || e.metaKey || e.ctrlKey) return;
+        document.querySelectorAll<HTMLElement>('.art').forEach((el) => (el.style.viewTransitionName = ''));
+        media.style.viewTransitionName = a.dataset.vt!;
+      }, true);
+    </script>
   </body>
 </html>
 
 <style>
-  .site-footer { margin-top: 120px; padding-block: 48px 64px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; }
-  .site-footer .display { font-size: clamp(3rem, 10vw, 8rem); color: var(--ink-3); -webkit-text-stroke: 1px var(--line-strong); }
-  .site-footer p:last-child { font-size: 0.85rem; max-width: 36ch; }
+  .site-footer { margin-top: 120px; padding-block: 40px 56px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; color: var(--text-3); font-size: 0.85rem; }
+  .brand { font-weight: 820; font-size: 1.1rem; letter-spacing: -0.04em; color: var(--text-2); }
+  @media (max-width: 760px) { .site-footer { padding-bottom: 110px; } }
 </style>

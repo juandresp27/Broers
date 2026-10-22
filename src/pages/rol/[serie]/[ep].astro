@@ -3,7 +3,7 @@ import Base from '../../../layouts/Base.astro';
 import Art from '../../../components/rol/Art.astro';
 import EpisodeCard from '../../../components/rol/EpisodeCard.astro';
 import Row from '../../../components/rol/Row.astro';
-import { allSeries, allEpisodes, neighbours, formatDuration, thumbFor } from '../../../lib/catalog';
+import { allSeries, allEpisodes, neighbours, formatDuration } from '../../../lib/catalog';
 import type { Episode, Series } from '../../../lib/types';
 
 export const getStaticPaths = () =>
@@ -12,69 +12,76 @@ export const getStaticPaths = () =>
 const { series: s, episode: e } = Astro.props as { series: Series; episode: Episode };
 const { prev, next } = neighbours(s, e.id);
 const season = s.seasons.find((x) => x.number === e.season)!;
-const code = season.special ? `Especial · ${season.title}` : s.seasons.length > 1 ? `Temporada ${e.season} · Episodio ${e.number}` : `Episodio ${e.number} de ${season.episodes.length}`;
-const stamp = (t: number) => `${Math.floor(t / 3600) ? Math.floor(t / 3600) + ':' : ''}${String(Math.floor((t % 3600) / 60)).padStart(Math.floor(t / 3600) ? 2 : 1, '0')}:${String(t % 60).padStart(2, '0')}`;
+const code = season.special ? `Especial` : s.seasons.filter((x) => !x.special).length > 1 ? `Temporada ${e.season} · Episodio ${e.number}` : `Episodio ${e.number} de ${season.episodes.length}`;
+const stamp = (t: number) => {
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
+  return `${h ? h + ':' + String(m).padStart(2, '0') : m}:${String(sec).padStart(2, '0')}`;
+};
 ---
-<Base title={`${e.title} · ${s.title}`} description={e.synopsis.logline ?? s.tagline} accent={s.color}>
+<Base title={`${e.title} · ${s.title}`} description={e.synopsis.logline ?? s.tagline} accent={s.color} image={e.demo ? undefined : `https://i.ytimg.com/vi/${e.id}/maxresdefault.jpg`}>
+  <div class="ambient" aria-hidden="true">
+    {!e.demo && <img src={`https://i.ytimg.com/vi/${e.id}/mqdefault.jpg`} alt="" />}
+  </div>
+
   <div class="watch wrap">
-    <nav class="crumbs label"><a href="/rol">Series</a> / <a href={s.href}>{s.title}</a></nav>
-
-    {prev && e.synopsis.previously && (
-      <aside class="previously">
-        <span class="label">Anteriormente en {s.title}</span>
-        <p>{e.synopsis.previously}</p>
-      </aside>
-    )}
-
-    <div class="player" data-player data-id={e.id} data-series={s.slug} data-demo={e.demo ? '1' : undefined}>
-      <Art thumb={e.demo ? undefined : thumbFor(e.id, 'maxres')} color={s.color} label={String(e.number).padStart(2, '0')} caption={s.title} eager />
+    <div class="player" data-player data-id={e.id} data-series={s.slug} data-demo={e.demo ? '1' : undefined} transition:name="ep-media">
+      <Art video={e.demo ? undefined : e.id} hd color={s.color} eager fallback={e.title} />
       <button type="button" class="play" data-play aria-label={`Reproducir ${e.title}`}>
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
       </button>
-      {e.demo && <p class="demo-note">Episodio de ejemplo: aparecerá el video cuando conectemos las playlists reales.</p>}
     </div>
 
     <div class="info">
       <div class="main">
-        <span class="label">{code}</span>
-        <h1>{e.title}</h1>
+        <a class="series-link eyebrow" href={s.href}>{s.title}</a>
+        <h1 class="title-lg">{e.title}</h1>
         <div class="meta">
-          {e.publishedAt && <span>{new Date(e.publishedAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+          <span>{code}</span>
+          {e.publishedAt && <span>{new Date(e.publishedAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
           {e.duration && <span>{formatDuration(e.duration)}</span>}
           {e.views ? <span>{e.views.toLocaleString('es-CO')} vistas</span> : null}
         </div>
+
+        {prev && e.synopsis.previously && (
+          <aside class="previously">
+            <span class="eyebrow">Anteriormente</span>
+            <p>{e.synopsis.previously}</p>
+          </aside>
+        )}
+
         {(e.synopsis.summary || e.synopsis.logline) && <p class="lede">{e.synopsis.summary ?? e.synopsis.logline}</p>}
-        {e.synopsis.characters?.length ? (
-          <p class="chars"><span class="label">En este episodio</span> {e.synopsis.characters.join(', ')}</p>
-        ) : null}
-        {!e.demo && <a class="yt" href={`https://www.youtube.com/watch?v=${e.id}`} target="_blank" rel="noopener">Ver en YouTube y apoyar el canal ↗</a>}
+        {e.synopsis.characters?.length ? <p class="chars"><span class="muted">Personajes:</span> {e.synopsis.characters.join(', ')}</p> : null}
+
+        <div class="actions">
+          {!e.demo && <a class="btn btn-glass" href={`https://www.youtube.com/watch?v=${e.id}`} target="_blank" rel="noopener">Ver en YouTube</a>}
+        </div>
       </div>
 
-      {e.synopsis.moments?.length ? (
-        <section class="moments">
-          <span class="label">Momentos clave</span>
-          <ol>
-            {e.synopsis.moments.map((m) => (
-              <li><button type="button" data-seek={m.t}><span class="t">{stamp(m.t)}</span>{m.text}</button></li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
-    </div>
+      <aside class="side">
+        {e.synopsis.moments?.length ? (
+          <section class="moments">
+            <h2 class="eyebrow">Momentos clave</h2>
+            <ol>
+              {e.synopsis.moments.map((m) => (
+                <li><button type="button" data-seek={m.t}><span class="t">{stamp(m.t)}</span><span>{m.text}</span></button></li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
 
-    {next && (
-      <a href={next.href} class="next" data-ep={next.id}>
-        <span class="label">Siguiente episodio</span>
-        <div class="next-art"><Art thumb={next.thumb} color={s.color} label={String(next.number).padStart(2, '0')} caption={s.title} /></div>
-        <div>
-          <span class="next-title">{next.title}</span>
-          {next.synopsis.logline && <p class="muted">{next.synopsis.logline}</p>}
-        </div>
-      </a>
-    )}
+        {next && (
+          <a href={next.href} class="next" data-ep={next.id} data-vt="ep-media">
+            <span class="eyebrow">A continuación</span>
+            <Art video={next.demo ? undefined : next.id} color={s.color} fallback={next.title} />
+            <strong>{next.title}</strong>
+            {next.duration ? <span class="muted">{formatDuration(next.duration)}</span> : null}
+          </a>
+        )}
+      </aside>
+    </div>
   </div>
 
-  <Row title={s.seasons.length > 1 ? `Temporada ${season.number}: ${season.title}` : 'Todos los episodios'}>
+  <Row title={season.special ? season.title : s.seasons.filter((x) => !x.special).length > 1 ? `Temporada ${season.number}` : 'Todos los episodios'} href={s.href}>
     {season.episodes.map((x) => <EpisodeCard episode={x} series={s} />)}
   </Row>
 </Base>
@@ -83,14 +90,13 @@ const stamp = (t: number) => `${Math.floor(t / 3600) ? Math.floor(t / 3600) + ':
   import { save, readAll, paintCards } from '../../../lib/progress';
 
   let apiReady: Promise<void> | undefined;
-  function loadApi() {
-    return (apiReady ??= new Promise((resolve) => {
+  const loadApi = () =>
+    (apiReady ??= new Promise((resolve) => {
       (window as any).onYouTubeIframeAPIReady = () => resolve();
       const s = document.createElement('script');
       s.src = 'https://www.youtube.com/iframe_api';
       document.head.append(s);
     }));
-  }
 
   function init() {
     paintCards();
@@ -98,6 +104,8 @@ const stamp = (t: number) => `${Math.floor(t / 3600) ? Math.floor(t / 3600) + ':
     if (!box || box.dataset.demo) return;
     const { id, series } = box.dataset as { id: string; series: string };
     let player: any;
+    // Precalentamos la API apenas el cursor se acerca al reproductor
+    box.addEventListener('pointerenter', loadApi, { once: true });
 
     async function start(at?: number) {
       if (player) {
@@ -105,15 +113,16 @@ const stamp = (t: number) => `${Math.floor(t / 3600) ? Math.floor(t / 3600) + ':
         return;
       }
       const resume = at ?? Math.max(0, (readAll()[id]?.t ?? 0) - 5);
+      box!.classList.add('loading');
       await loadApi();
       const mount = document.createElement('div');
       box!.append(mount);
-      box!.classList.add('playing');
       const YT = (window as any).YT;
       player = new YT.Player(mount, {
         host: 'https://www.youtube-nocookie.com',
         videoId: id,
-        playerVars: { autoplay: 1, start: Math.floor(resume), rel: 0, modestbranding: 1, playsinline: 1 },
+        playerVars: { autoplay: 1, start: Math.floor(resume), rel: 0, playsinline: 1 },
+        events: { onReady: () => box!.classList.add('playing') },
       });
       // Guardamos el punto exacto cada pocos segundos para "Continuar viendo"
       const timer = setInterval(() => {
@@ -136,43 +145,52 @@ const stamp = (t: number) => `${Math.floor(t / 3600) ? Math.floor(t / 3600) + ':
 </script>
 
 <style>
-  .watch { padding-top: 96px; display: grid; gap: 28px; max-width: 1280px; margin-inline: auto; }
-  .crumbs a:hover { color: var(--paper); }
-  .previously { border-left: 3px solid var(--accent, var(--signal)); padding: 4px 0 4px 18px; max-width: 70ch; }
-  .previously p { margin-top: 6px; font-size: 1.05rem; font-style: italic; color: rgb(241 234 219 / 0.85); }
+  /* Luz ambiental: la miniatura difuminada tiñe el fondo, como en Apple TV */
+  .ambient { position: absolute; inset: 0 0 auto; height: 900px; overflow: hidden; z-index: 0; pointer-events: none; }
+  .ambient img { width: 100%; height: 100%; object-fit: cover; filter: blur(90px) saturate(1.6); opacity: 0.35; transform: scale(1.3); }
+  .ambient::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 30%, var(--bg)); }
 
-  .player { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: var(--radius); overflow: hidden; box-shadow: 0 30px 80px -30px color-mix(in oklab, var(--accent, #000), transparent 40%); }
-  .player :global(.art) { position: absolute; inset: 0; height: 100%; border-radius: 0; }
-  .player :global(iframe) { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .player.playing :global(.art), .player.playing .play { display: none; }
-  .play { position: absolute; inset: 0; margin: auto; width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: var(--signal); color: var(--signal-ink); transition: transform 0.25s var(--ease); }
-  .play:hover { transform: scale(1.08); }
-  .play svg { width: 38px; margin-left: 5px; }
-  .demo-note { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 18px; background: rgb(0 0 0 / 0.6); font-size: 0.9rem; }
+  .watch { position: relative; z-index: 1; padding-top: 92px; max-width: 1440px; margin-inline: auto; display: grid; gap: 32px; }
+  .player { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r-lg); overflow: hidden; background: #000; box-shadow: 0 40px 100px -30px rgb(0 0 0 / 0.9), 0 0 0 1px var(--line); }
+  .player :global(.art) { position: absolute; inset: 0; height: 100%; }
+  .player :global(iframe) { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s; }
+  .player.playing :global(iframe) { opacity: 1; }
+  .player.playing :global(.art), .player.playing .play { opacity: 0; pointer-events: none; }
+  .player :global(.art) { transition: opacity 0.6s; }
+  .play {
+    position: absolute; inset: 0; margin: auto; width: 88px; height: 88px; border-radius: 50%; display: grid; place-items: center; color: #000;
+    background: rgb(255 255 255 / 0.92); box-shadow: 0 10px 40px rgb(0 0 0 / 0.4);
+    transition: transform 0.5s var(--spring), opacity 0.3s;
+  }
+  .play:hover { transform: scale(1.1); }
+  .play:active { transform: scale(0.95); }
+  .play svg { width: 34px; margin-left: 4px; }
+  .loading .play { animation: breathe 1s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform: scale(0.92); opacity: 0.7; } }
 
-  .info { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 360px); gap: clamp(28px, 4vw, 64px); }
+  .info { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px); gap: clamp(28px, 5vw, 72px); }
   .main { display: grid; gap: 14px; align-content: start; }
-  h1 { font-size: clamp(2rem, 3vw + 1rem, 3.4rem); font-weight: 820; font-stretch: 75%; line-height: 1; letter-spacing: -0.01em; text-wrap: balance; }
-  .chars { font-size: 0.95rem; }
-  .chars .label { margin-right: 8px; }
-  .yt { font-size: 0.9rem; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; width: fit-content; }
-  .yt:hover { color: var(--paper); }
+  .series-link { transition: color 0.2s; }
+  .series-link:hover { color: var(--text); }
+  .previously { padding: 16px 18px; border-radius: var(--r); background: rgb(255 255 255 / 0.05); box-shadow: inset 0 0 0 1px var(--line); display: grid; gap: 6px; max-width: 70ch; }
+  .previously p { color: var(--text-2); }
+  .chars { font-size: 0.94rem; }
+  .actions { display: flex; gap: 10px; margin-top: 4px; }
 
-  .moments { display: grid; gap: 10px; align-content: start; }
-  .moments ol { list-style: none; padding: 0; border-top: 1px solid var(--line); }
-  .moments button { width: 100%; text-align: left; display: grid; grid-template-columns: 64px 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 0.95rem; transition: color 0.2s; }
-  .moments button:hover { color: var(--accent, var(--signal)); }
-  .t { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent, var(--signal)); }
+  .side { display: grid; gap: 28px; align-content: start; }
+  .moments ol { list-style: none; padding: 0; margin-top: 10px; display: grid; gap: 2px; }
+  .moments button { width: 100%; text-align: left; display: grid; grid-template-columns: 62px 1fr; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 0.93rem; transition: background-color 0.2s; }
+  .moments button:hover { background: rgb(255 255 255 / 0.07); }
+  .t { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-2); }
+  .next { display: grid; gap: 8px; padding: 14px; border-radius: var(--r-lg); background: rgb(255 255 255 / 0.05); box-shadow: inset 0 0 0 1px var(--line); transition: background-color 0.3s, transform 0.5s var(--spring); }
+  .next:hover { background: rgb(255 255 255 / 0.09); transform: translateY(-3px); }
+  .next :global(.art) { border-radius: var(--r-sm); }
+  .next strong { font-weight: 650; letter-spacing: -0.01em; }
 
-  .next { display: grid; grid-template-columns: auto 200px minmax(0, 1fr); gap: 20px; align-items: center; padding: 18px; background: var(--ink-2); border: 1px solid var(--line); border-radius: var(--radius); transition: border-color 0.2s; }
-  .next:hover { border-color: var(--line-strong); }
-  .next .label { writing-mode: vertical-rl; transform: rotate(180deg); color: var(--accent, var(--signal)); }
-  .next-title { font-weight: 700; font-size: 1.15rem; }
-  .next p { font-size: 0.92rem; margin-top: 4px; }
-
-  @media (max-width: 860px) {
+  @media (max-width: 900px) {
     .info { grid-template-columns: 1fr; }
-    .next { grid-template-columns: 120px minmax(0, 1fr); }
-    .next .label { writing-mode: initial; transform: none; grid-column: 1 / -1; }
+    .watch { padding-top: 68px; padding-inline: 0; }
+    .player { border-radius: 0; }
+    .info { padding-inline: var(--gutter); }
   }
 </style>
